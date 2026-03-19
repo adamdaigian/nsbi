@@ -1,0 +1,52 @@
+---
+title: TextInput
+description: A free-text input field that sets a template variable for SQL queries.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| name | string | Yes | — | Filter variable name. Use `${name}` in SQL to reference the entered text. |
+| label | string | No | — | Label displayed above the input. |
+| placeholder | string | No | — | Placeholder text shown when the input is empty. |
+
+## Example
+
+```mdx
+<TextInput name="search" label="Search" placeholder="Enter a product name..." />
+
+```sql
+-- name: product_search
+SELECT product_name, category, price
+FROM products
+WHERE product_name ILIKE '%${search}%'
+ORDER BY product_name
+LIMIT 50
+```
+
+<DataTable data="product_search" />
+```
+
+### Combined with other filters
+
+```mdx
+<Grid cols={3}>
+  <TextInput name="search" label="Search" placeholder="Customer name..." />
+  <Dropdown name="status" options={["active", "churned", "trial"]} label="Status" />
+  <Dropdown name="plan" options={["free", "starter", "pro"]} label="Plan" />
+</Grid>
+
+```sql
+-- name: customers
+SELECT name, email, plan, status, created_at
+FROM customers
+WHERE name ILIKE '%${search}%'
+  AND status = '${status}'
+  AND plan = '${plan}'
+ORDER BY created_at DESC
+LIMIT 100
+```
+
+<DataTable data="customers" />
+```

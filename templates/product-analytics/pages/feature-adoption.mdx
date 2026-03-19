@@ -1,0 +1,47 @@
+---
+title: Feature Adoption
+description: Track feature usage and adoption across the product
+---
+
+```sql
+-- name: feature_usage
+SELECT
+  feature,
+  COUNT(*) as total_events,
+  COUNT(DISTINCT user_id) as unique_users,
+  ROUND(100.0 * COUNT(DISTINCT user_id) / (SELECT COUNT(DISTINCT user_id) FROM events), 1) as adoption_pct
+FROM events
+GROUP BY feature
+ORDER BY unique_users DESC
+```
+
+```sql
+-- name: feature_trend
+SELECT
+  DATE_TRUNC('month', event_date::DATE) as month,
+  feature,
+  COUNT(DISTINCT user_id) as users
+FROM events
+GROUP BY 1, 2
+ORDER BY 1
+```
+
+```sql
+-- name: feature_by_action
+SELECT feature, action, COUNT(*) as count
+FROM events
+GROUP BY feature, action
+ORDER BY feature, count DESC
+```
+
+<Group title="Feature Adoption">
+  <DataTable data="feature_usage" />
+</Group>
+
+<Group title="Feature Usage Over Time">
+  <LineChart data="feature_trend" x="month" y="users" series="feature" xFmt="month" title="Monthly Active Users by Feature" />
+</Group>
+
+<Group title="Actions by Feature">
+  <BarChart data="feature_by_action" x="feature" y="count" series="action" stacked title="Action Breakdown" />
+</Group>

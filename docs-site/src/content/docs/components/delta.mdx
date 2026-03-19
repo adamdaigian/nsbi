@@ -1,0 +1,30 @@
+---
+title: Delta
+description: An inline indicator that displays a numeric change with directional color coding.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| value | number | Yes | — | The numeric change value to display. |
+| format | string | No | — | Format string for the value (e.g. `"+0.0%"` for percentage, `"$#,##0"` for currency). |
+| isUpGood | boolean | No | `true` | Whether a positive value is styled as good (green) or bad (red). |
+
+## Example
+
+```mdx
+```sql
+-- name: conversion_change
+SELECT
+  (current_rate - previous_rate) / previous_rate AS rate_change
+FROM (
+  SELECT
+    AVG(CASE WHEN period = 'current' THEN conversion_rate END) AS current_rate,
+    AVG(CASE WHEN period = 'previous' THEN conversion_rate END) AS previous_rate
+  FROM conversion_metrics
+)
+```
+
+Conversion rate changed by <Delta value={0.12} format="+0.0%" isUpGood /> this month.
+```

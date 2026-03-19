@@ -1,0 +1,51 @@
+---
+title: AreaChart
+description: An area chart for visualizing volume and composition over time.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| data | string | Yes | — | Name of the SQL query to use as the data source. |
+| x | string | Yes | — | Column to map to the x-axis (typically a date or category). |
+| y | string | Yes | — | Column to map to the y-axis (numeric values). |
+| series | string | No | — | Column used to split data into multiple stacked or overlapping areas. |
+| smooth | boolean | No | `false` | Whether to render smooth (curved) area boundaries. |
+| stacked | boolean | No | `false` | Whether to stack areas on top of each other. |
+| fillOpacity | number | No | `0.3` | Opacity of the filled area, from `0` (transparent) to `1` (opaque). |
+| xFmt | string | No | — | Format string for x-axis labels (e.g. `"MMM yyyy"` for dates). |
+| yFmt | string | No | — | Format string for y-axis labels (e.g. `"#,##0"` for integers). |
+| title | string | No | — | Title displayed above the chart. |
+| subtitle | string | No | — | Subtitle displayed below the title. |
+| height | number | No | `400` | Height of the chart in pixels. |
+| colorPalette | string[] | No | — | Custom array of color hex codes for the series. |
+
+## Example
+
+```mdx
+```sql
+-- name: weekly_signups
+SELECT
+  date_trunc('week', created_at) AS week,
+  signup_source,
+  COUNT(*) AS signups
+FROM users
+GROUP BY week, signup_source
+ORDER BY week
+```
+
+<AreaChart
+  data="weekly_signups"
+  x="week"
+  y="signups"
+  series="signup_source"
+  stacked
+  smooth
+  fillOpacity={0.4}
+  xFmt="MMM dd"
+  yFmt="#,##0"
+  title="Weekly Signups by Source"
+  subtitle="Stacked by acquisition channel"
+/>
+```

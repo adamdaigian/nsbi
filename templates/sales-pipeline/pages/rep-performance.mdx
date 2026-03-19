@@ -1,0 +1,56 @@
+---
+title: Rep Performance
+description: Individual sales rep metrics and rankings
+---
+
+```sql
+-- name: rep_rankings
+SELECT
+  r.rep_name,
+  r.team,
+  r.region,
+  COUNT(d.deal_id) as total_deals,
+  SUM(CASE WHEN d.stage = 'Closed Won' THEN d.amount ELSE 0 END) as revenue,
+  ROUND(100.0 * COUNT(CASE WHEN d.stage = 'Closed Won' THEN 1 END) / NULLIF(COUNT(CASE WHEN d.stage LIKE 'Closed%' THEN 1 END), 0), 1) as win_rate
+FROM reps r
+LEFT JOIN deals d ON r.rep_id = d.rep_id
+GROUP BY r.rep_name, r.team, r.region
+ORDER BY revenue DESC
+```
+
+```sql
+-- name: rep_monthly_trend
+SELECT
+  r.rep_name,
+  DATE_TRUNC('month', d.close_date::DATE) as month,
+  SUM(d.amount) as revenue
+FROM deals d
+JOIN reps r ON d.rep_id = r.rep_id
+WHERE d.stage = 'Closed Won' AND d.close_date IS NOT NULL
+GROUP BY r.rep_name, 2
+ORDER BY 2
+```
+
+```sql
+-- name: activity_by_rep
+SELECT
+  r.rep_name,
+  COUNT(a.activity_id) as total_activities,
+  ROUND(AVG(a.duration_minutes), 1) as avg_duration
+FROM reps r
+LEFT JOIN activities a ON r.rep_id = a.rep_id
+GROUP BY r.rep_name
+ORDER BY total_activities DESC
+```
+
+<Group title="Rep Rankings">
+  <DataTable data="rep_rankings" />
+</Group>
+
+<Group title="Monthly Revenue by Rep">
+  <LineChart data="rep_monthly_trend" x="month" y="revenue" series="rep_name" xFmt="month" yFmt="usd0" title="Revenue Trend" />
+</Group>
+
+<Group title="Activity Volume">
+  <BarChart data="activity_by_rep" x="rep_name" y="total_activities" horizontal title="Activities per Rep" sort="desc" />
+</Group>

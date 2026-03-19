@@ -1,0 +1,57 @@
+---
+title: Retention
+description: User retention cohort analysis
+---
+
+```sql
+-- name: cohort_retention
+SELECT
+  DATE_TRUNC('month', u.signup_date::DATE) as cohort_month,
+  DATEDIFF('month', DATE_TRUNC('month', u.signup_date::DATE), DATE_TRUNC('month', s.session_date::DATE)) as months_since_signup,
+  COUNT(DISTINCT s.user_id) as active_users
+FROM users u
+JOIN sessions s ON u.user_id = s.user_id
+GROUP BY 1, 2
+HAVING months_since_signup >= 0 AND months_since_signup <= 12
+ORDER BY 1, 2
+```
+
+```sql
+-- name: monthly_retention
+SELECT
+  DATE_TRUNC('month', session_date::DATE) as month,
+  COUNT(DISTINCT user_id) as returning_users
+FROM sessions s
+WHERE EXISTS (
+  SELECT 1 FROM sessions s2
+  WHERE s2.user_id = s.user_id
+  AND DATE_TRUNC('month', s2.session_date::DATE) < DATE_TRUNC('month', s.session_date::DATE)
+)
+GROUP BY 1
+ORDER BY 1
+```
+
+```sql
+-- name: churn_by_plan
+SELECT
+  u.plan,
+  COUNT(DISTINCT u.user_id) as total_users,
+  COUNT(DISTINCT CASE WHEN s.session_date >= CURRENT_DATE - INTERVAL '30 days' THEN u.user_id END) as active_last_30d,
+  ROUND(100.0 * COUNT(DISTINCT CASE WHEN s.session_date >= CURRENT_DATE - INTERVAL '30 days' THEN u.user_id END) / NULLIF(COUNT(DISTINCT u.user_id), 0), 1) as retention_rate
+FROM users u
+LEFT JOIN sessions s ON u.user_id = s.user_id
+GROUP BY u.plan
+ORDER BY retention_rate DESC
+```
+
+<Group title="Cohort Retention">
+  <LineChart data="cohort_retention" x="months_since_signup" y="active_users" series="cohort_month" title="Users Active by Months Since Signup" />
+</Group>
+
+<Group title="Monthly Returning Users">
+  <AreaChart data="monthly_retention" x="month" y="returning_users" xFmt="month" smooth title="Returning Users per Month" />
+</Group>
+
+<Group title="Retention by Plan">
+  <DataTable data="churn_by_plan" />
+</Group>

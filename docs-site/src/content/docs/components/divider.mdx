@@ -1,0 +1,26 @@
+---
+title: Divider
+description: A horizontal rule for visually separating sections of a dashboard.
+---
+
+## Props
+
+`Divider` takes no props. It renders a subtle horizontal line using the Northstar border color token.
+
+## Example
+
+```mdx
+<Group title="Overview">
+  <Grid cols={3}>
+    <BigValue data="kpis" value="total_users" title="Users" />
+    <BigValue data="kpis" value="revenue" title="Revenue" />
+    <BigValue data="kpis" value="churn_rate" title="Churn" />
+  </Grid>
+</Group>
+
+<Divider />
+
+<Group title="Trends">
+  <LineChart data="monthly_revenue" x="month" y="revenue" title="Monthly Revenue" />
+</Group>
+```

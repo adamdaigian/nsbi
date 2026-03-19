@@ -1,0 +1,45 @@
+---
+title: BigValue
+description: A KPI card that highlights a single important metric with optional comparison and sparkline.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| data | string | Yes | — | Name of the SQL query to use as the data source. |
+| value | string | Yes | — | Column containing the primary metric value to display. |
+| title | string | No | — | Label displayed above the metric value. |
+| fmt | string | No | — | Format string for the primary value (e.g. `"$#,##0"` for currency). |
+| comparison | string | No | — | Column containing a comparison value (e.g. previous period change). |
+| comparisonFormat | string | No | — | Format string for the comparison value (e.g. `"+0.0%"` for percentage change). |
+| sparklineField | string | No | — | Column containing time-series data to render as a sparkline beneath the value. |
+| isUpGood | boolean | No | `true` | Whether an upward trend is positive (green) or negative (red). |
+
+## Example
+
+```mdx
+```sql
+-- name: revenue_kpi
+SELECT
+  SUM(revenue) AS current_revenue,
+  (SUM(revenue) - LAG(SUM(revenue)) OVER (ORDER BY period)) / LAG(SUM(revenue)) OVER (ORDER BY period) AS pct_change,
+  period,
+  SUM(revenue) AS revenue_trend
+FROM monthly_financials
+GROUP BY period
+ORDER BY period DESC
+LIMIT 12
+```
+
+<BigValue
+  data="revenue_kpi"
+  value="current_revenue"
+  title="Total Revenue"
+  fmt="$#,##0"
+  comparison="pct_change"
+  comparisonFormat="+0.0%"
+  sparklineField="revenue_trend"
+  isUpGood
+/>
+```

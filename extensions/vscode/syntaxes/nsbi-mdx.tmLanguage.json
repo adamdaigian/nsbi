@@ -1,0 +1,117 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "nsbi MDX",
+  "scopeName": "source.nsbi-mdx",
+  "patterns": [
+    { "include": "#frontmatter" },
+    { "include": "#sql-block" },
+    { "include": "#jsx-component" },
+    { "include": "#template-variable" },
+    { "include": "#markdown" }
+  ],
+  "repository": {
+    "frontmatter": {
+      "begin": "\\A---\\s*$",
+      "end": "^---\\s*$",
+      "name": "markup.raw.yaml.front-matter",
+      "patterns": [
+        {
+          "match": "^(\\w+)(:)",
+          "captures": {
+            "1": { "name": "entity.name.tag.yaml" },
+            "2": { "name": "punctuation.separator.key-value.yaml" }
+          }
+        }
+      ]
+    },
+    "sql-block": {
+      "begin": "^```sql\\s*$",
+      "end": "^```\\s*$",
+      "name": "meta.embedded.block.sql",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.code.fenced.markdown" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.code.fenced.markdown" }
+      },
+      "patterns": [
+        {
+          "match": "^(--\\s*name:\\s*)(.+)$",
+          "captures": {
+            "1": { "name": "comment.line.double-dash.sql" },
+            "2": { "name": "entity.name.function.query-name.nsbi" }
+          },
+          "name": "comment.line.query-directive.nsbi"
+        },
+        {
+          "match": "\\$\\{(\\w+)\\}",
+          "name": "variable.other.template.nsbi",
+          "captures": {
+            "1": { "name": "variable.parameter.filter.nsbi" }
+          }
+        },
+        { "include": "source.sql" }
+      ]
+    },
+    "jsx-component": {
+      "begin": "(<)(/?)(\\w+)",
+      "end": "(/>|>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.jsx" },
+        "2": { "name": "punctuation.definition.tag.begin.jsx" },
+        "3": { "name": "entity.name.tag.jsx" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.end.jsx" }
+      },
+      "patterns": [
+        {
+          "match": "(\\w+)(=)",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.jsx" },
+            "2": { "name": "punctuation.separator.key-value.jsx" }
+          }
+        },
+        {
+          "begin": "\"",
+          "end": "\"",
+          "name": "string.quoted.double.jsx"
+        },
+        {
+          "begin": "\\{",
+          "end": "\\}",
+          "name": "meta.embedded.expression.jsx",
+          "patterns": [
+            { "include": "source.js" }
+          ]
+        }
+      ]
+    },
+    "template-variable": {
+      "match": "\\$\\{(\\w+)\\}",
+      "name": "variable.other.template.nsbi",
+      "captures": {
+        "1": { "name": "variable.parameter.filter.nsbi" }
+      }
+    },
+    "markdown": {
+      "patterns": [
+        {
+          "match": "^(#{1,6})\\s+(.+)$",
+          "captures": {
+            "1": { "name": "punctuation.definition.heading.markdown" },
+            "2": { "name": "markup.heading.markdown" }
+          }
+        },
+        {
+          "match": "\\*\\*(.+?)\\*\\*",
+          "name": "markup.bold.markdown"
+        },
+        {
+          "match": "\\*(.+?)\\*",
+          "name": "markup.italic.markdown"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "nsbi",
+  "displayName": "nsbi - BI as Code",
+  "description": "Syntax highlighting, preview, and autocomplete for nsbi MDX dashboards",
+  "version": "0.1.0",
+  "publisher": "nsbi",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages", "Visualization"],
+  "activationEvents": [
+    "onLanguage:nsbi-mdx",
+    "workspaceContains:**/*.mdx"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "nsbi-mdx",
+        "aliases": ["nsbi MDX", "nsbi"],
+        "extensions": [".mdx"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "nsbi-mdx",
+        "scopeName": "source.nsbi-mdx",
+        "path": "./syntaxes/nsbi-mdx.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.sql": "sql",
+          "meta.embedded.block.javascript": "javascript"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "nsbi.openPreview",
+        "title": "nsbi: Open Dashboard Preview",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceLangId == nsbi-mdx",
+          "command": "nsbi.openPreview",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.7.0"
+  }
+}

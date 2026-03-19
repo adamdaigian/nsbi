@@ -1,0 +1,120 @@
+---
+title: User Explorer
+description: Filter and drill into user acquisition and retention
+---
+
+```sql
+-- name: filtered_users
+SELECT
+  DATE_TRUNC('month', signup_date) as month,
+  COUNT(*) as signups,
+  SUM(CASE WHEN status = 'churned' THEN 1 ELSE 0 END) as churned,
+  SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active
+FROM users
+WHERE source = ${source}
+GROUP BY month
+ORDER BY month
+```
+
+```sql
+-- name: filtered_kpis
+SELECT
+  COUNT(*) as total,
+  SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+  SUM(CASE WHEN status = 'churned' THEN 1 ELSE 0 END) as churned,
+  ROUND(SUM(CASE WHEN status = 'churned' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) as churn_rate
+FROM users
+WHERE source = ${source}
+```
+
+```sql
+-- name: filtered_plans
+SELECT
+  plan,
+  COUNT(*) as users
+FROM users
+WHERE source = ${source}
+GROUP BY plan
+ORDER BY users DESC
+```
+
+```sql
+-- name: filtered_industries
+SELECT
+  industry,
+  COUNT(*) as users
+FROM users
+WHERE source = ${source}
+GROUP BY industry
+ORDER BY users DESC
+```
+
+```sql
+-- name: all_sources
+SELECT
+  DATE_TRUNC('month', signup_date) as month,
+  source,
+  COUNT(*) as signups
+FROM users
+GROUP BY month, source
+ORDER BY month, source
+```
+
+<Group title="Filters">
+<Grid cols={2}>
+<Dropdown
+  name="source"
+  label="Acquisition Source"
+  options={[
+    { label: "Organic", value: "organic" },
+    { label: "Paid Search", value: "paid_search" },
+    { label: "Paid Social", value: "paid_social" },
+    { label: "Referral", value: "referral" }
+  ]}
+  defaultValue="organic"
+/>
+<ButtonGroup
+  name="view"
+  label="View"
+  options={[
+    { label: "Growth", value: "growth" },
+    { label: "Retention", value: "retention" }
+  ]}
+/>
+</Grid>
+</Group>
+
+<Divider />
+
+<Group title="Source KPIs">
+<Grid cols={4}>
+<BigValue data="filtered_kpis" value="total" title="Total Users" fmt="num0" />
+<BigValue data="filtered_kpis" value="active" title="Active" fmt="num0" />
+<BigValue data="filtered_kpis" value="churned" title="Churned" fmt="num0" />
+<BigValue data="filtered_kpis" value="churn_rate" title="Churn Rate %" fmt="num2" />
+</Grid>
+</Group>
+
+<Divider />
+
+<Group title="Source Trends">
+<Grid cols={2}>
+<LineChart data="filtered_users" x="month" xFmt="month" y="signups" title="Signups" subtitle="Selected source" smooth />
+<BarChart data="filtered_users" x="month" xFmt="month" y="churned" title="Churned Users" subtitle="Selected source" />
+</Grid>
+</Group>
+
+<Divider />
+
+<Group title="Source Breakdown">
+<Grid cols={2}>
+<BarChart data="filtered_plans" x="plan" y="users" title="Plan Distribution" />
+<BarChart data="filtered_industries" x="industry" y="users" title="Industry Distribution" />
+</Grid>
+</Group>
+
+<Divider />
+
+<Group title="All Sources Comparison">
+<BarChart data="all_sources" x="month" xFmt="month" y="signups" series="source" stacked title="Signups by Source" />
+</Group>

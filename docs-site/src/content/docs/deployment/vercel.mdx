@@ -1,0 +1,28 @@
+---
+title: Vercel
+description: Deploy nsbi dashboards to Vercel
+---
+
+## One-Click Deploy
+
+1. Push your nsbi project to GitHub
+2. Import in [Vercel Dashboard](https://vercel.com/new)
+3. Set the build command and output directory:
+
+| Setting | Value |
+|---------|-------|
+| Build Command | `npx nsbi build --project .` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
+
+## Automatic SPA Routing
+
+nsbi generates a `vercel.json` in `dist/` during build with SPA fallback rewrites. No additional configuration needed.
+
+## Environment Variables
+
+No environment variables are required — nsbi builds are fully static.
+
+## Custom Domain
+
+After deploying, add a custom domain in **Settings → Domains**.

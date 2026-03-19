@@ -1,0 +1,72 @@
+---
+title: Pipeline Overview
+description: Sales pipeline health and deal flow metrics
+---
+
+```sql
+-- name: pipeline_kpis
+SELECT
+  COUNT(*) as total_deals,
+  SUM(CASE WHEN stage = 'Closed Won' THEN amount ELSE 0 END) as revenue_won,
+  ROUND(AVG(CASE WHEN stage NOT LIKE 'Closed%' THEN probability END), 1) as avg_probability,
+  COUNT(CASE WHEN stage NOT LIKE 'Closed%' THEN 1 END) as open_deals
+FROM deals
+```
+
+```sql
+-- name: pipeline_by_stage
+SELECT stage, COUNT(*) as deals, SUM(amount) as total_value
+FROM deals
+WHERE stage NOT LIKE 'Closed%'
+GROUP BY stage
+ORDER BY CASE stage
+  WHEN 'Prospecting' THEN 1
+  WHEN 'Qualification' THEN 2
+  WHEN 'Proposal' THEN 3
+  WHEN 'Negotiation' THEN 4
+END
+```
+
+```sql
+-- name: monthly_closed
+SELECT
+  DATE_TRUNC('month', close_date::DATE) as month,
+  SUM(CASE WHEN stage = 'Closed Won' THEN amount ELSE 0 END) as won,
+  SUM(CASE WHEN stage = 'Closed Lost' THEN amount ELSE 0 END) as lost
+FROM deals
+WHERE close_date IS NOT NULL
+GROUP BY 1
+ORDER BY 1
+```
+
+```sql
+-- name: deals_by_source
+SELECT source, COUNT(*) as deals, SUM(amount) as total_value
+FROM deals
+GROUP BY source
+ORDER BY total_value DESC
+```
+
+<Group title="Key Metrics">
+  <Grid cols={4}>
+    <BigValue data="pipeline_kpis" value="total_deals" title="Total Deals" fmt="num0" />
+    <BigValue data="pipeline_kpis" value="revenue_won" title="Revenue Won" fmt="usd0" />
+    <BigValue data="pipeline_kpis" value="avg_probability" title="Avg Probability" fmt="pct0" />
+    <BigValue data="pipeline_kpis" value="open_deals" title="Open Deals" fmt="num0" />
+  </Grid>
+</Group>
+
+<Group title="Pipeline by Stage">
+  <BarChart data="pipeline_by_stage" x="stage" y="total_value" yFmt="usd0" title="Pipeline Value by Stage" />
+</Group>
+
+<Group title="Monthly Revenue">
+  <Grid cols={2}>
+    <BarChart data="monthly_closed" x="month" y="won" xFmt="month" yFmt="usd0" title="Closed Won" />
+    <BarChart data="monthly_closed" x="month" y="lost" xFmt="month" yFmt="usd0" title="Closed Lost" />
+  </Grid>
+</Group>
+
+<Group title="Deal Sources">
+  <BarChart data="deals_by_source" x="source" y="total_value" yFmt="usd0" horizontal title="Revenue by Source" />
+</Group>

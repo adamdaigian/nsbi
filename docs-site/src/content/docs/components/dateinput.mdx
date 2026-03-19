@@ -1,0 +1,54 @@
+---
+title: DateInput
+description: A single-date picker with a calendar popup.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| name | string | Yes | — | Filter variable name. Use `${name}` in SQL to reference the selected date. |
+| label | string | No | — | Label displayed above the date picker. |
+
+The selected date is displayed in `MMM d, yyyy` format (e.g. "Jan 15, 2025"). A calendar popup appears on click for date selection.
+
+## Example
+
+```mdx
+<DateInput name="as_of_date" label="As of Date" />
+
+```sql
+-- name: snapshot
+SELECT
+  metric,
+  value
+FROM daily_snapshots
+WHERE snapshot_date = '${as_of_date}'
+ORDER BY metric
+```
+
+<DataTable data="snapshot" />
+```
+
+### Comparing two dates
+
+```mdx
+<Grid cols={2}>
+  <DateInput name="start_date" label="Start Date" />
+  <DateInput name="end_date" label="End Date" />
+</Grid>
+
+```sql
+-- name: date_range_data
+SELECT
+  DATE_TRUNC('day', event_date) AS day,
+  COUNT(*) AS events
+FROM events
+WHERE event_date >= '${start_date}'
+  AND event_date <= '${end_date}'
+GROUP BY 1
+ORDER BY 1
+```
+
+<LineChart data="date_range_data" x="day" y="events" xFmt="MMM d" title="Events Over Time" />
+```

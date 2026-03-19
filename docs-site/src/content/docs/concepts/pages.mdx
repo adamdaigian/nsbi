@@ -1,0 +1,65 @@
+---
+title: Pages
+description: Multi-page dashboards with file-based routing
+---
+
+## File-Based Routing
+
+Every `.mdx` file in `pages/` becomes a dashboard page. The file structure maps to URL routes:
+
+```
+pages/
+├── index.mdx           → /
+├── users.mdx           → #/users
+├── revenue.mdx         → #/revenue
+└── analysis/
+    ├── growth.mdx      → #/analysis/growth
+    └── retention.mdx   → #/analysis/retention
+```
+
+## Page Structure
+
+Each page is an MDX file with three sections:
+
+### 1. Frontmatter
+
+```yaml
+---
+title: Revenue Dashboard
+description: Monthly recurring revenue and churn metrics
+---
+```
+
+| Field | Description |
+|-------|-------------|
+| `title` | Page title (shown in header and sidebar) |
+| `description` | Subtitle text below the title |
+
+### 2. SQL Queries
+
+Define named queries in fenced SQL code blocks:
+
+```sql
+-- name: monthly_revenue
+SELECT month, revenue FROM revenue_table ORDER BY month
+```
+
+The `-- name: query_name` comment is required — it links the query to components via the `data` prop.
+
+### 3. Components
+
+Use nsbi components to render query results:
+
+```jsx
+<LineChart data="monthly_revenue" x="month" y="revenue" />
+```
+
+## Sidebar Navigation
+
+When your project has multiple pages, nsbi automatically generates a sidebar. Directories become collapsible sections. Page names are formatted from kebab-case to Title Case.
+
+## Tips
+
+- Name your index page `index.mdx` — it loads by default
+- Use directories to organize related pages
+- Files starting with `_` or `.` are ignored

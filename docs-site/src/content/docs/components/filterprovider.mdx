@@ -1,0 +1,47 @@
+---
+title: FilterProvider
+description: Context provider that manages filter state for all input components on a page.
+---
+
+`FilterProvider` is a React context provider that holds the current filter values and exposes an `onChange` callback. All input components (`Dropdown`, `TextInput`, `Slider`, etc.) read from and write to this context.
+
+**You typically do not need to use `FilterProvider` directly.** nsbi automatically wraps each page in a `FilterProvider` so that filter inputs and SQL template variables work out of the box.
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| values | `Record<string, unknown>` | Yes | — | The current filter state object, keyed by filter `name`. |
+| onChange | `(key: string, value: unknown) => void` | Yes | — | Callback invoked when any filter value changes. |
+
+## How it works
+
+1. Input components call `useFilterValue(name)` to read their current value and get an `onChange` function.
+2. When a user interacts with a filter (e.g. selects a dropdown option), the input calls `onChange(newValue)`.
+3. The `FilterProvider` updates its state, which triggers re-renders.
+4. SQL queries containing `${name}` template variables are re-executed with the new filter values.
+5. Charts and tables re-render with the updated query results.
+
+## Example
+
+In the rare case you need explicit control over filter state, you can use `FilterProvider` directly:
+
+```mdx
+<FilterProvider values={{ plan: "pro", region: "North" }} onChange={(key, val) => console.log(key, val)}>
+  <Dropdown name="plan" options={["free", "starter", "pro"]} label="Plan" />
+  <Dropdown name="region" options={["North", "South", "East", "West"]} label="Region" />
+</FilterProvider>
+```
+
+For normal dashboards, simply place filter inputs anywhere on the page. nsbi handles the context automatically:
+
+```mdx
+<Dropdown name="plan" options={["free", "starter", "pro"]} label="Plan" />
+
+```sql
+-- name: users
+SELECT * FROM users WHERE plan = '${plan}'
+```
+
+<DataTable data="users" />
+```

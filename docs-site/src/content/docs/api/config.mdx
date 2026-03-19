@@ -1,0 +1,51 @@
+---
+title: Configuration
+description: nsbi.config.ts reference
+---
+
+## Config File
+
+nsbi looks for configuration in the project root, in this order:
+
+1. `nsbi.config.ts`
+2. `nsbi.config.js`
+3. `nsbi.config.json`
+
+## Schema
+
+```ts
+export default {
+  // Page title (shown in browser tab)
+  title: "My Dashboard",
+
+  // Project description
+  description: "Business metrics dashboard",
+
+  // Theme (currently only dark is supported)
+  theme: "dark",
+
+  // Base path for deployment (e.g., "/repo-name/" for GitHub Pages)
+  basePath: "/",
+
+  // Data directory settings
+  data: {
+    dir: "data",   // Relative to project root
+  },
+
+  // Build output settings
+  build: {
+    outDir: "dist", // Output directory for production build
+  },
+};
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `title` | `string` | — | Project title |
+| `description` | `string` | — | Project description |
+| `theme` | `"dark" \| "light"` | `"dark"` | Color theme |
+| `basePath` | `string` | `"/"` | URL base path (for subpath deploys) |
+| `data.dir` | `string` | `"data"` | Data files directory |
+| `build.outDir` | `string` | `"dist"` | Build output directory |

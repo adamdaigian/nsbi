@@ -1,0 +1,34 @@
+---
+title: Netlify
+description: Deploy nsbi dashboards to Netlify
+---
+
+## Setup
+
+### 1. Build Settings
+
+In **Site Settings → Build & Deploy**:
+
+| Setting | Value |
+|---------|-------|
+| Build Command | `npx nsbi build --project .` |
+| Publish Directory | `dist` |
+
+### 2. SPA Routing
+
+nsbi generates a `_redirects` file in `dist/` during build:
+
+```
+/*    /index.html   200
+```
+
+This handles client-side routing automatically.
+
+### 3. Deploy
+
+Connect your Git repository to Netlify, or deploy manually:
+
+```bash
+npx nsbi build --project .
+npx netlify deploy --dir=dist --prod
+```

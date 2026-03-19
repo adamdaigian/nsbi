@@ -1,0 +1,71 @@
+---
+title: Tabs
+description: Tabbed interface for organizing content into switchable panels.
+---
+
+Tabs are built on [Radix UI Tabs](https://www.radix-ui.com/primitives/docs/components/tabs) and exposed as four components: `Tabs`, `TabsList`, `TabsTrigger`, and `TabsContent`.
+
+## Components
+
+### Tabs (root)
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| defaultValue | string | Yes | — | The `value` of the tab that should be active by default. |
+
+### TabsTrigger
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| value | string | Yes | — | Unique identifier for this tab. Must match the corresponding `TabsContent` value. |
+
+### TabsContent
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| value | string | Yes | — | The tab value this content panel belongs to. Shown when the matching trigger is active. |
+
+## Example
+
+```mdx
+<Tabs defaultValue="revenue">
+  <TabsList>
+    <TabsTrigger value="revenue">Revenue</TabsTrigger>
+    <TabsTrigger value="users">Users</TabsTrigger>
+    <TabsTrigger value="orders">Orders</TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="revenue">
+    <LineChart data="monthly_revenue" x="month" y="revenue" title="Monthly Revenue" />
+  </TabsContent>
+
+  <TabsContent value="users">
+    <BarChart data="users_by_plan" x="plan" y="count" title="Users by Plan" />
+  </TabsContent>
+
+  <TabsContent value="orders">
+    <DataTable data="recent_orders" />
+  </TabsContent>
+</Tabs>
+```
+
+### Tabs inside a Grid
+
+```mdx
+<Grid cols={2}>
+  <Tabs defaultValue="chart">
+    <TabsList>
+      <TabsTrigger value="chart">Chart</TabsTrigger>
+      <TabsTrigger value="table">Table</TabsTrigger>
+    </TabsList>
+    <TabsContent value="chart">
+      <BarChart data="top_products" x="product" y="units" title="Top Products" />
+    </TabsContent>
+    <TabsContent value="table">
+      <DataTable data="top_products" />
+    </TabsContent>
+  </Tabs>
+
+  <LineChart data="daily_orders" x="date" y="order_count" title="Daily Orders" />
+</Grid>
+```

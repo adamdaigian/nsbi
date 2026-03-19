@@ -1,0 +1,57 @@
+---
+title: CLI Reference
+description: nsbi command-line interface
+---
+
+## Commands
+
+### `nsbi dev`
+
+Start the development server with hot reload.
+
+```bash
+nsbi dev [options]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--project <path>` | `.` | Project directory (must contain `pages/`) |
+| `--port <port>` | `3000` | Port to listen on |
+
+### `nsbi init`
+
+Scaffold a new nsbi project.
+
+```bash
+nsbi init [name] [options]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--template <name>` | `blank` | Template: `blank`, `saas-metrics`, `sales-pipeline`, `product-analytics` |
+
+### `nsbi build`
+
+Build for production. Pre-executes queries and generates a static site.
+
+```bash
+nsbi build [options]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--project <path>` | `.` | Project directory |
+
+Output goes to the directory specified in `nsbi.config.ts` (default: `dist/`).
+
+### `nsbi preview`
+
+Preview the production build locally.
+
+```bash
+nsbi preview [options]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--port <port>` | `4173` | Port to listen on |

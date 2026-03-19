@@ -1,0 +1,48 @@
+---
+title: LineChart
+description: A line chart for visualizing trends and time-series data.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| data | string | Yes | — | Name of the SQL query to use as the data source. |
+| x | string | Yes | — | Column to map to the x-axis (typically a date or category). |
+| y | string | Yes | — | Column to map to the y-axis (numeric values). |
+| series | string | No | — | Column used to split data into multiple lines. |
+| smooth | boolean | No | `false` | Whether to render smooth (curved) lines instead of straight segments. |
+| xFmt | string | No | — | Format string for x-axis labels (e.g. `"MMM yyyy"` for dates). |
+| yFmt | string | No | — | Format string for y-axis labels (e.g. `"$#,##0"` for currency). |
+| y2 | string | No | — | Column to plot on a secondary y-axis. |
+| title | string | No | — | Title displayed above the chart. |
+| subtitle | string | No | — | Subtitle displayed below the title. |
+| height | number | No | `400` | Height of the chart in pixels. |
+| colorPalette | string[] | No | — | Custom array of color hex codes for the series. |
+
+## Example
+
+```mdx
+```sql
+-- name: monthly_revenue
+SELECT
+  date_trunc('month', order_date) AS month,
+  product_category,
+  SUM(revenue) AS total_revenue
+FROM orders
+GROUP BY month, product_category
+ORDER BY month
+```
+
+<LineChart
+  data="monthly_revenue"
+  x="month"
+  y="total_revenue"
+  series="product_category"
+  smooth
+  xFmt="MMM yyyy"
+  yFmt="$#,##0"
+  title="Monthly Revenue by Category"
+  subtitle="Trailing 12 months"
+/>
+```

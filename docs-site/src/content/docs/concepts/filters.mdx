@@ -1,0 +1,70 @@
+---
+title: Filters
+description: Interactive filters with template variables
+---
+
+## How Filters Work
+
+Filters make dashboards interactive. They use template variables (`${varName}`) in SQL queries that get replaced with user-selected values.
+
+### 1. Add a Filter Input
+
+```jsx
+<Dropdown name="plan" options={["free", "starter", "pro"]} defaultValue="free" label="Plan" />
+```
+
+### 2. Use the Variable in SQL
+
+```sql
+-- name: filtered_users
+SELECT * FROM users WHERE plan = ${plan}
+```
+
+### 3. Automatic Re-execution
+
+When the user changes the dropdown, nsbi:
+1. Detects which queries reference `${plan}`
+2. Re-executes those queries with the new value (150ms debounce)
+3. Updates all charts bound to those queries
+
+## Available Filter Components
+
+| Component | Use Case |
+|-----------|----------|
+| `Dropdown` | Single-select from a list |
+| `MultiSelect` | Multi-select with checkboxes |
+| `ButtonGroup` | Toggle between options |
+| `TextInput` | Free-form text input |
+| `Slider` | Numeric range selection |
+| `DateRange` | Date range picker |
+| `DateInput` | Single date picker |
+| `CheckboxFilter` | Boolean toggle |
+
+## Template Variables
+
+Template variables use `${name}` syntax in SQL:
+
+```sql
+SELECT * FROM orders
+WHERE status = ${status}
+  AND amount >= ${min_amount}
+  AND created_at BETWEEN ${start_date} AND ${end_date}
+```
+
+### SQL Injection Protection
+
+Values are automatically escaped:
+- Strings: single quotes escaped (`'` → `''`)
+- Numbers: passed as-is
+- Dates: formatted as `'YYYY-MM-DD'`
+- Booleans: `TRUE` / `FALSE`
+- Null/undefined: `NULL`
+
+## Static vs Filtered Queries
+
+nsbi categorizes queries at build time:
+
+- **Static queries**: No `${var}` references → pre-executed at build time, instant load
+- **Filtered queries**: Have `${var}` references → executed at runtime via DuckDB WASM
+
+This means pages with only static queries don't need WASM at all — they load instantly as pre-rendered JSON.

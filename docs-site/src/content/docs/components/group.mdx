@@ -1,0 +1,38 @@
+---
+title: Group
+description: Section wrapper that groups related components under an optional title.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| title | string | No | — | Section heading displayed with a left accent border. |
+
+## Example
+
+```mdx
+<Group title="Revenue Metrics">
+  <Grid cols={3}>
+    <BigValue data="kpis" value="mrr" title="MRR" />
+    <BigValue data="kpis" value="arr" title="ARR" />
+    <BigValue data="kpis" value="net_revenue" title="Net Revenue" />
+  </Grid>
+  <LineChart data="monthly_revenue" x="month" y="revenue" title="Monthly Revenue" />
+</Group>
+
+<Group title="User Engagement">
+  <BarChart data="engagement" x="feature" y="daily_active_users" title="DAU by Feature" />
+</Group>
+```
+
+### Without a title
+
+When used without a `title`, `Group` still provides consistent vertical spacing between its children.
+
+```mdx
+<Group>
+  <LineChart data="signups" x="month" y="count" title="Signups" />
+  <DataTable data="signups" />
+</Group>
+```

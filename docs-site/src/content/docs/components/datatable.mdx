@@ -1,0 +1,35 @@
+---
+title: DataTable
+description: A paginated data table for displaying tabular query results.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| data | string | Yes | — | Name of the SQL query to use as the data source. |
+| columns | string[] | No | — | Subset of columns to display. If omitted, all columns from the query are shown. |
+| pageSize | number | No | `10` | Number of rows displayed per page. |
+
+## Example
+
+```mdx
+```sql
+-- name: recent_orders
+SELECT
+  order_id,
+  customer_name,
+  order_date,
+  status,
+  total_amount
+FROM orders
+ORDER BY order_date DESC
+LIMIT 100
+```
+
+<DataTable
+  data="recent_orders"
+  columns={["order_id", "customer_name", "order_date", "status", "total_amount"]}
+  pageSize={15}
+/>
+```

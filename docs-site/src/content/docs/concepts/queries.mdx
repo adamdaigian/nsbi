@@ -1,0 +1,71 @@
+---
+title: Queries
+description: SQL queries powered by DuckDB
+---
+
+## Writing Queries
+
+Queries are written as fenced SQL code blocks in your MDX files:
+
+```sql
+-- name: users_by_plan
+SELECT plan, COUNT(*) as count
+FROM users
+GROUP BY plan
+ORDER BY count DESC
+```
+
+### Query Name
+
+Every query needs a `-- name: <name>` comment on the first line. This name is used to reference the query in components:
+
+```jsx
+<BarChart data="users_by_plan" x="plan" y="count" />
+```
+
+### DuckDB SQL
+
+nsbi uses [DuckDB](https://duckdb.org/) for query execution. You get full SQL support including:
+
+- Window functions (`ROW_NUMBER`, `LAG`, `LEAD`)
+- `DATE_TRUNC`, `DATEDIFF`, `INTERVAL` for date math
+- `PIVOT` / `UNPIVOT`
+- CTEs (`WITH ... AS`)
+- `read_csv_auto()`, `read_parquet()` for direct file queries
+
+## Data Sources
+
+Files in the `data/` directory are automatically registered as tables:
+
+| File | Table Name |
+|------|-----------|
+| `data/users.csv` | `users` |
+| `data/events.parquet` | `events` |
+| `data/analytics.db` | All tables from the database |
+
+## Multiple Queries Per Page
+
+A page can have any number of queries. They execute in parallel:
+
+```sql
+-- name: total_users
+SELECT COUNT(*) as count FROM users
+```
+
+```sql
+-- name: monthly_signups
+SELECT month, COUNT(*) as signups FROM users GROUP BY month
+```
+
+```jsx
+<BigValue data="total_users" value="count" title="Total Users" />
+<LineChart data="monthly_signups" x="month" y="signups" />
+```
+
+## Query Results
+
+Each query returns:
+- `rows` — array of objects (`Record<string, unknown>[]`)
+- `columns` — array of `{ name, type }` metadata
+
+Components access these through the `data` prop, which resolves the query name from the QueryContext.

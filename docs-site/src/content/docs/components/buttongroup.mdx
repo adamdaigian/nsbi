@@ -1,0 +1,65 @@
+---
+title: ButtonGroup
+description: A segmented button group for selecting one option from a small set of choices.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| name | string | Yes | — | Filter variable name. Use `${name}` in SQL to reference the selected value. |
+| options | string[] | Yes | — | List of options. Each string is used as both the label and value. |
+| label | string | No | — | Label displayed above the button group. |
+| defaultValue | string | No | — | Initial selected value. |
+
+`ButtonGroup` is best suited for small sets of options (2--5 items). For longer lists, use [Dropdown](/components/dropdown) instead.
+
+## Example
+
+```mdx
+<ButtonGroup
+  name="time_grain"
+  options={["day", "week", "month"]}
+  defaultValue="week"
+  label="Time Grain"
+/>
+
+```sql
+-- name: revenue_trend
+SELECT
+  DATE_TRUNC('${time_grain}', order_date) AS period,
+  SUM(revenue) AS total_revenue
+FROM orders
+GROUP BY 1
+ORDER BY 1
+```
+
+<LineChart
+  data="revenue_trend"
+  x="period"
+  y="total_revenue"
+  yFmt="$#,##0"
+  title="Revenue Trend"
+/>
+```
+
+### Multiple button groups
+
+```mdx
+<Grid cols={2}>
+  <ButtonGroup name="metric" options={["revenue", "orders", "users"]} defaultValue="revenue" label="Metric" />
+  <ButtonGroup name="time_grain" options={["day", "week", "month"]} defaultValue="month" label="Time Grain" />
+</Grid>
+
+```sql
+-- name: trend
+SELECT
+  DATE_TRUNC('${time_grain}', created_at) AS period,
+  SUM(${metric}) AS value
+FROM metrics
+GROUP BY 1
+ORDER BY 1
+```
+
+<LineChart data="trend" x="period" y="value" title="Trend" />
+```

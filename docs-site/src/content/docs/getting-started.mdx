@@ -1,0 +1,90 @@
+---
+title: Quick Start
+description: Build your first nsbi dashboard in 5 minutes
+---
+
+## 1. Create a Project
+
+```bash
+npx nsbi init my-dashboard --template saas-metrics
+cd my-dashboard
+```
+
+## 2. Start the Dev Server
+
+```bash
+npx nsbi dev --project .
+```
+
+Open [http://localhost:3000](http://localhost:3000). You should see a SaaS metrics dashboard with KPIs, charts, and tables.
+
+## 3. Edit a Page
+
+Open `pages/index.mdx` in your editor. You'll see:
+
+```mdx
+---
+title: SaaS Overview
+description: Key business metrics
+---
+
+```sql
+-- name: kpis
+SELECT COUNT(*) as total_users FROM users
+```
+
+<BigValue data="kpis" value="total_users" title="Total Users" />
+```
+
+### How it works:
+
+1. **Frontmatter** (`---`) sets the page title and description
+2. **SQL blocks** (` ```sql `) define named queries executed against your data
+3. **Components** (`<BigValue>`, `<BarChart>`, etc.) render query results as visualizations
+
+## 4. Add a New Chart
+
+Add this below the existing content:
+
+```mdx
+```sql
+-- name: monthly_trend
+SELECT DATE_TRUNC('month', created_at) as month, COUNT(*) as signups
+FROM users GROUP BY 1 ORDER BY 1
+```
+
+<LineChart data="monthly_trend" x="month" y="signups" xFmt="month" title="Monthly Signups" />
+```
+
+Save the file — the dashboard updates instantly via hot reload.
+
+## 5. Add Filters
+
+Make queries interactive with template variables:
+
+```mdx
+<Dropdown name="plan" options={["free", "starter", "pro"]} defaultValue="free" label="Plan" />
+
+```sql
+-- name: filtered_users
+SELECT * FROM users WHERE plan = ${plan}
+```
+
+<DataTable data="filtered_users" />
+```
+
+## 6. Build and Deploy
+
+```bash
+npx nsbi build --project .
+npx nsbi preview
+```
+
+Your dashboard is now a static site at `dist/` — deploy it anywhere.
+
+## Next Steps
+
+- [Pages](/concepts/pages) — learn about multi-page dashboards
+- [Queries](/concepts/queries) — SQL query patterns and tips
+- [Components](/components/linechart) — explore all chart and layout components
+- [Deployment](/deployment/vercel) — deploy to Vercel, Netlify, or GitHub Pages

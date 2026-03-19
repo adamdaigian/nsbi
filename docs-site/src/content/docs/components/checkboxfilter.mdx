@@ -1,0 +1,51 @@
+---
+title: CheckboxFilter
+description: A boolean checkbox filter that sets a true/false template variable.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| name | string | Yes | — | Filter variable name. Use `${name}` in SQL to reference the boolean value. |
+| label | string | No | — | Label displayed next to the checkbox. |
+
+The filter value is `true` when checked and `false` (default) when unchecked.
+
+## Example
+
+```mdx
+<CheckboxFilter name="active_only" label="Active customers only" />
+
+```sql
+-- name: customers
+SELECT name, email, plan, is_active
+FROM customers
+WHERE (${active_only} = false OR is_active = true)
+ORDER BY name
+```
+
+<DataTable data="customers" />
+```
+
+### Multiple checkboxes
+
+```mdx
+<Grid cols={3}>
+  <CheckboxFilter name="has_orders" label="Has placed orders" />
+  <CheckboxFilter name="verified" label="Email verified" />
+  <CheckboxFilter name="subscribed" label="Newsletter subscriber" />
+</Grid>
+
+```sql
+-- name: filtered_users
+SELECT name, email, signup_date
+FROM users
+WHERE (${has_orders} = false OR total_orders > 0)
+  AND (${verified} = false OR email_verified = true)
+  AND (${subscribed} = false OR newsletter = true)
+ORDER BY signup_date DESC
+```
+
+<DataTable data="filtered_users" />
+```

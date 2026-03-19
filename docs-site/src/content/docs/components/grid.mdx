@@ -1,0 +1,39 @@
+---
+title: Grid
+description: Responsive grid layout for arranging components in columns.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| cols | number | No | `2` | Number of equal-width columns (1--6). |
+| gap | number | No | `16` | Gap between grid items in pixels. |
+
+## Example
+
+```mdx
+<Grid cols={3}>
+  <BigValue data="kpis" value="total_users" title="Users" />
+  <BigValue data="kpis" value="revenue" title="Revenue" />
+  <BigValue data="kpis" value="churn_rate" title="Churn" />
+</Grid>
+```
+
+### Two-column chart layout
+
+```mdx
+<Grid cols={2}>
+  <LineChart data="monthly_revenue" x="month" y="revenue" title="Revenue" />
+  <BarChart data="sales_by_region" x="region" y="total_sales" title="Sales" />
+</Grid>
+```
+
+### Single column (stacked)
+
+```mdx
+<Grid cols={1}>
+  <BarChart data="top_products" x="product" y="units_sold" title="Top Products" />
+  <DataTable data="top_products" />
+</Grid>
+```

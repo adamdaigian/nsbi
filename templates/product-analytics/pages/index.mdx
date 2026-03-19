@@ -1,0 +1,72 @@
+---
+title: Product Analytics
+description: User engagement, retention, and feature adoption metrics
+---
+
+```sql
+-- name: engagement_kpis
+SELECT
+  COUNT(DISTINCT user_id) as total_users,
+  COUNT(DISTINCT CASE WHEN session_date >= CURRENT_DATE - INTERVAL '1 day' THEN user_id END) as dau,
+  COUNT(DISTINCT CASE WHEN session_date >= CURRENT_DATE - INTERVAL '30 days' THEN user_id END) as mau,
+  ROUND(AVG(duration_seconds) / 60.0, 1) as avg_session_min
+FROM sessions
+```
+
+```sql
+-- name: dau_trend
+SELECT
+  session_date::DATE as date,
+  COUNT(DISTINCT user_id) as dau
+FROM sessions
+WHERE session_date >= CURRENT_DATE - INTERVAL '90 days'
+GROUP BY 1
+ORDER BY 1
+```
+
+```sql
+-- name: signups_by_month
+SELECT
+  DATE_TRUNC('month', signup_date::DATE) as month,
+  COUNT(*) as signups
+FROM users
+GROUP BY 1
+ORDER BY 1
+```
+
+```sql
+-- name: users_by_plan
+SELECT plan, COUNT(*) as users
+FROM users
+GROUP BY plan
+ORDER BY users DESC
+```
+
+```sql
+-- name: platform_breakdown
+SELECT platform, COUNT(DISTINCT user_id) as users
+FROM sessions
+GROUP BY platform
+ORDER BY users DESC
+```
+
+<Group title="Key Metrics">
+  <Grid cols={4}>
+    <BigValue data="engagement_kpis" value="total_users" title="Total Users" fmt="num0" />
+    <BigValue data="engagement_kpis" value="dau" title="DAU" fmt="num0" />
+    <BigValue data="engagement_kpis" value="mau" title="MAU" fmt="num0" />
+    <BigValue data="engagement_kpis" value="avg_session_min" title="Avg Session (min)" fmt="num1" />
+  </Grid>
+</Group>
+
+<Group title="Daily Active Users (90d)">
+  <LineChart data="dau_trend" x="date" y="dau" xFmt="month" smooth title="DAU Trend" />
+</Group>
+
+<Group title="User Distribution">
+  <Grid cols={3}>
+    <BarChart data="signups_by_month" x="month" y="signups" xFmt="month" title="Monthly Signups" />
+    <BarChart data="users_by_plan" x="plan" y="users" title="Users by Plan" />
+    <BarChart data="platform_breakdown" x="platform" y="users" title="Users by Platform" />
+  </Grid>
+</Group>

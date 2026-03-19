@@ -1,0 +1,58 @@
+---
+title: Dropdown
+description: A single-select dropdown filter that sets a template variable for SQL queries.
+---
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| name | string | Yes | — | Filter variable name. Use `${name}` in SQL to reference the selected value. |
+| data | string | No | — | Name of a SQL query whose results populate the dropdown options. |
+| options | string[] | No | — | Static list of options. Each string is used as both the label and value. |
+| label | string | No | — | Label displayed above the dropdown. |
+| defaultValue | string | No | — | Initial selected value. Seeds the filter context on mount. |
+
+Provide either `options` (static list) or `data` (query-driven). When using `data`, the query should return rows with `label` and `value` columns.
+
+## Example
+
+### Static options
+
+```mdx
+<Dropdown
+  name="plan"
+  options={["free", "starter", "pro", "enterprise"]}
+  defaultValue="free"
+  label="Plan"
+/>
+
+```sql
+-- name: users_by_plan
+SELECT * FROM users WHERE plan = '${plan}'
+```
+
+<DataTable data="users_by_plan" />
+```
+
+### Query-driven options
+
+```mdx
+```sql
+-- name: regions
+SELECT DISTINCT region AS label, region AS value FROM sales ORDER BY region
+```
+
+<Dropdown name="region" data="regions" label="Region" />
+
+```sql
+-- name: sales_in_region
+SELECT product, SUM(amount) AS total
+FROM sales
+WHERE region = '${region}'
+GROUP BY product
+ORDER BY total DESC
+```
+
+<BarChart data="sales_in_region" x="product" y="total" title="Sales by Product" />
+```

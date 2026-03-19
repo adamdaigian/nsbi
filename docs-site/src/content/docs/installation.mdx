@@ -1,0 +1,68 @@
+---
+title: Installation
+description: Get nsbi up and running in minutes
+---
+
+## Prerequisites
+
+- **Node.js** 18 or later
+- **npm** (comes with Node.js)
+
+## Create a New Project
+
+```bash
+npx nsbi init my-dashboard
+cd my-dashboard
+```
+
+### With a Template
+
+nsbi ships with starter templates to get you going faster:
+
+```bash
+# Blank project
+npx nsbi init my-dashboard --template blank
+
+# SaaS metrics dashboard (with sample data)
+npx nsbi init my-dashboard --template saas-metrics
+
+# Sales pipeline dashboard
+npx nsbi init my-dashboard --template sales-pipeline
+
+# Product analytics dashboard
+npx nsbi init my-dashboard --template product-analytics
+```
+
+## Start the Dev Server
+
+```bash
+npx nsbi dev --project .
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see your dashboard.
+
+## Project Structure
+
+```
+my-dashboard/
+├── pages/           # MDX dashboard files
+│   └── index.mdx    # Main dashboard page
+├── data/            # CSV, Parquet, or DuckDB files
+├── nsbi.config.ts   # Project configuration
+```
+
+## Add Your Data
+
+Drop `.csv`, `.parquet`, or `.db` files into the `data/` directory. They're automatically registered as SQL tables:
+
+- `data/users.csv` → table named `users`
+- `data/events.parquet` → table named `events`
+- `data/analytics.db` → all tables from the database
+
+## Build for Production
+
+```bash
+npx nsbi build --project .
+```
+
+This pre-executes all queries, bundles the site, and outputs to `dist/`. Deploy anywhere — no server required.

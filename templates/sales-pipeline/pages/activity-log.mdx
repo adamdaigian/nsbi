@@ -1,0 +1,72 @@
+---
+title: Activity Log
+description: Sales activity tracking and analysis
+---
+
+```sql
+-- name: activity_summary
+SELECT
+  activity_type,
+  COUNT(*) as count,
+  ROUND(AVG(duration_minutes), 1) as avg_duration,
+  SUM(duration_minutes) as total_minutes
+FROM activities
+GROUP BY activity_type
+ORDER BY count DESC
+```
+
+```sql
+-- name: daily_activities
+SELECT
+  activity_date::DATE as date,
+  COUNT(*) as activities
+FROM activities
+GROUP BY 1
+ORDER BY 1
+```
+
+```sql
+-- name: activity_by_type_monthly
+SELECT
+  DATE_TRUNC('month', activity_date::DATE) as month,
+  activity_type,
+  COUNT(*) as count
+FROM activities
+GROUP BY 1, 2
+ORDER BY 1
+```
+
+```sql
+-- name: recent_activities
+SELECT
+  a.activity_date,
+  r.rep_name,
+  a.activity_type,
+  d.deal_name,
+  a.duration_minutes,
+  a.notes
+FROM activities a
+JOIN reps r ON a.rep_id = r.rep_id
+JOIN deals d ON a.deal_id = d.deal_id
+ORDER BY a.activity_date DESC
+LIMIT 100
+```
+
+<Group title="Activity Breakdown">
+  <Grid cols={2}>
+    <BarChart data="activity_summary" x="activity_type" y="count" title="Activities by Type" sort="desc" labels />
+    <BarChart data="activity_summary" x="activity_type" y="avg_duration" title="Avg Duration (min)" sort="desc" labels />
+  </Grid>
+</Group>
+
+<Group title="Activity Trends">
+  <AreaChart data="daily_activities" x="date" y="activities" xFmt="month" smooth title="Daily Activity Volume" />
+</Group>
+
+<Group title="Activity Mix Over Time">
+  <AreaChart data="activity_by_type_monthly" x="month" y="count" series="activity_type" xFmt="month" stacked title="Monthly Activity by Type" />
+</Group>
+
+<Group title="Recent Activities">
+  <DataTable data="recent_activities" pageSize={20} />
+</Group>
