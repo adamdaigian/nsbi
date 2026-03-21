@@ -6,7 +6,6 @@ dist/
 
 # Internal docs
 CLAUDE.md
-/docs/
 
 # Environment
 .env
