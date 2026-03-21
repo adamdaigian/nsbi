@@ -13,7 +13,9 @@
   },
   "scripts": {
     "dev": "tsx cli/index.ts dev --project ./demo",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.33.1-dev20.0",
@@ -44,16 +46,20 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/express": "^5.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^29.0.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
-    "vite": "^6.2.4"
+    "vite": "^6.2.4",
+    "vitest": "^4.1.0"
   }
 }
