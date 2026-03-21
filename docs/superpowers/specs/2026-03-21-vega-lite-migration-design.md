@@ -2,7 +2,7 @@
 
 ## Context
 
-nsbi is being redesigned as the visualization foundation for both the standalone open-source BI-as-code tool and Northstar's front-end. The current charting layer uses ECharts (tree-shaken to ~300KB) with 5 chart components (LineChart, AreaChart, BarChart, ScatterPlot, Sparkline), 2 non-ECharts components (BigValue, DataTable), and an EChartsRaw escape hatch.
+nsbi is being redesigned as the visualization foundation for both the standalone open-source BI-as-code tool and Northstar's front-end. The current charting layer uses ECharts (tree-shaken to ~300KB) with 5 chart components (LineChart, AreaChart, BarChart, ScatterPlot, Sparkline), 3 non-ECharts components (BigValue, Delta, DataTable), and an EChartsRaw escape hatch.
 
 The entire front-end is being rebuilt. MDX is not required. The authoring model is moving to declarative config files (YAML/JSON) that compile to dashboards.
 
@@ -114,21 +114,11 @@ Vega-Lite specs reference named datasets. The query engine (DuckDB native or WAS
 
 This replaces the current `QueryProvider` / `withQueryData` HOC pattern.
 
-### Config-to-Spec Assembly
+### Spec Assembly
 
-The YAML config format separates `data`, `title`, and `spec` into sibling keys for readability. A thin assembly function reconstitutes them into a full Vega-Lite `TopLevelSpec` before passing to `<VegaChart>`. This is not a sugar layer — it is mechanical key merging with no transformation logic:
+All consumers pass partial specs (just `mark` + `encoding`) to `<VegaChart>`. The component handles assembly internally — adding `$schema`, `data`, theme config, and sizing defaults to produce a full `TopLevelSpec` before calling `vega-embed`. This means the config parser, chart builder, and AI generation all use the same simple interface without needing to construct complete Vega-Lite specs themselves.
 
-```
-YAML chart config → assembleSpec() → full TopLevelSpec → <VegaChart>
-```
-
-`assembleSpec()` does:
-1. Takes the partial spec (`mark` + `encoding`) from the YAML `spec` key
-2. Injects the named dataset reference from the `data` key
-3. Applies the global Northstar Vega theme config
-4. Adds `$schema` and defaults (`width: "container"`, `height: "container"`)
-
-This lives in the config parser, not in `<VegaChart>` — the component always receives an assembled spec.
+The YAML config format separates `data`, `title`, and `spec` into sibling keys for readability. The config parser extracts these and passes them as separate props to `<VegaChart>` — no intermediate assembly step needed.
 
 ### Dashboard Config Format
 
@@ -197,14 +187,14 @@ Builder layers replaced:
 - `src/builder/codegen.ts` — builder now reads/writes Vega-Lite specs directly instead of generating MDX
 - `src/builder/parse-mdx.ts` — no MDX to parse; builder state is a mutable Vega-Lite spec object
 - `src/builder/sync.ts` — bidirectional sync is replaced by the spec being the single source of truth
+- `src/builder/types.ts` — rewritten; ECharts-era types (`ChartType`, `ChartSpec`, etc.) replaced with Vega-Lite equivalents. `ChartType` union maps to the 12 builder chart types + `"table"`. `ChartSpec` wraps a partial Vega-Lite spec + metadata (title, data source, preset).
 
 ## What Gets Added
 
-- `vega`, `vega-lite`, `vega-embed` dependencies
+- `vega`, `vega-lite` (v5.x, `$schema: https://vega.github.io/schema/vega-lite/v5.json`), `vega-embed` dependencies
 - `src/components/charts/VegaChart.tsx` — single rendering component
 - `src/components/charts/vega-theme.ts` — Northstar theme as Vega config
-- Convenience presets — functions that take a chart type string (e.g., `"stacked-bar"`) and return a partial Vega-Lite spec with reasonable defaults (stack mode, type annotations, format strings). Applied at config parse time by `assembleSpec()`. Not a compiler — just a shorthand so users can write `preset: stacked-bar` instead of manually setting `mark.type`, `encoding.y.stack`, etc.
-- `src/config/assemble-spec.ts` — the config-to-spec assembly function
+- `src/config/presets.ts` — convenience presets: functions that take a chart type string (e.g., `"stacked-bar"`) and return a partial Vega-Lite spec with reasonable defaults (stack mode, type annotations, format strings). Applied at config parse time. Not a compiler — just a shorthand so users can write `preset: stacked-bar` instead of manually setting `mark.type`, `encoding.y.stack`, etc. Signature: `applyPreset(preset: string, userSpec: Partial<VegaLiteSpec>) => Partial<VegaLiteSpec>`
 
 ### Error Handling
 
