@@ -21,7 +21,7 @@ export function VegaChart({
   title,
   subtitle,
   width = 'container',
-  height = 'container',
+  height = 300,
   className,
 }: VegaChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -43,11 +43,15 @@ export function VegaChart({
     const parsedSpec = JSON.parse(specKey)
     const parsedData = JSON.parse(dataKey)
 
+    // Read container width before vega-embed mutates the DOM
+    const containerWidth = containerRef.current.parentElement?.clientWidth ?? containerRef.current.clientWidth
+
     const fullSpec: TopLevelSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
       ...parsedSpec,
-      width: width === 'container' ? undefined : width,
-      height: height === 'container' ? undefined : height,
+      width: width === 'container' ? Math.max(containerWidth - 20, 100) : width,
+      height: typeof height === 'number' ? height : 300,
+      autosize: { type: 'fit', contains: 'padding' },
       datasets: parsedData,
     } as TopLevelSpec
 
@@ -70,24 +74,12 @@ export function VegaChart({
     })
       .then((result) => {
         resultRef.current = result
-        // Responsive resize: re-render on container size changes
-        if (width === 'container') {
-          const ro = new ResizeObserver(() => {
-            result.view
-              .width(el.clientWidth)
-              .run()
-          })
-          ro.observe(el)
-          ;(result as unknown as Record<string, unknown>).__ro = ro
-        }
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : String(err))
       })
 
     return () => {
-      const ro = (resultRef.current as unknown as Record<string, unknown>)?.__ro as ResizeObserver | undefined
-      ro?.disconnect()
       resultRef.current?.finalize()
       resultRef.current = null
     }
@@ -119,7 +111,7 @@ export function VegaChart({
           Chart error: {error}
         </div>
       ) : (
-        <div ref={containerRef} data-testid="vega-chart" />
+        <div ref={containerRef} data-testid="vega-chart" style={{ overflow: 'hidden' }} />
       )}
     </div>
   )

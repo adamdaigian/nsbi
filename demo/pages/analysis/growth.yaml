@@ -1,0 +1,111 @@
+title: Product Analytics
+description: Feature usage, engagement patterns, and event breakdown
+
+queries:
+  event_kpis:
+    sql: |
+      SELECT
+        COUNT(*) as total_events,
+        COUNT(DISTINCT user_id) as unique_users,
+        COUNT(DISTINCT session_id) as sessions,
+        ROUND(COUNT(*) * 1.0 / COUNT(DISTINCT session_id), 1) as events_per_session
+      FROM events
+
+  events_by_type:
+    sql: |
+      SELECT event_type, COUNT(*) as count
+      FROM events GROUP BY event_type ORDER BY count DESC
+
+  events_by_feature:
+    sql: |
+      SELECT feature, COUNT(*) as total_events, COUNT(DISTINCT user_id) as unique_users
+      FROM events GROUP BY feature ORDER BY total_events DESC
+
+  events_over_time:
+    sql: |
+      SELECT DATE_TRUNC('month', ts) as month, event_type, COUNT(*) as count
+      FROM events GROUP BY month, event_type ORDER BY month, event_type
+
+  feature_over_time:
+    sql: |
+      SELECT DATE_TRUNC('month', ts) as month, feature, COUNT(*) as count
+      FROM events GROUP BY month, feature ORDER BY month, feature
+
+  top_users:
+    sql: |
+      SELECT e.user_id, u.plan, u.industry,
+        COUNT(*) as events, COUNT(DISTINCT e.session_id) as sessions,
+        COUNT(DISTINCT e.feature) as features_used
+      FROM events e JOIN users u ON u.id = e.user_id
+      GROUP BY e.user_id, u.plan, u.industry
+      ORDER BY events DESC LIMIT 15
+
+layout:
+  - row:
+    - big-value: { data: event_kpis, value: total_events, title: Total Events }
+    - big-value: { data: event_kpis, value: unique_users, title: Unique Users }
+    - big-value: { data: event_kpis, value: sessions, title: Sessions }
+    - big-value: { data: event_kpis, value: events_per_session, title: Events / Session }
+  - row:
+    - chart: by_type
+    - chart: by_feature
+  - row:
+    - chart: events_time
+    - chart: feature_time
+  - row:
+    - chart: adoption
+  - row:
+    - table: top_users
+
+charts:
+  by_type:
+    data: events_by_type
+    title: Events by Type
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: event_type, type: nominal }
+        y: { field: count, type: quantitative }
+
+  by_feature:
+    data: events_by_feature
+    title: Events by Feature
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: feature, type: nominal }
+        y: { field: total_events, type: quantitative }
+
+  events_time:
+    data: events_over_time
+    title: Events Over Time
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: count, type: quantitative }
+        color: { field: event_type, type: nominal }
+
+  feature_time:
+    data: feature_over_time
+    title: Feature Usage Trends
+    preset: line
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: count, type: quantitative }
+        color: { field: feature, type: nominal }
+
+  adoption:
+    data: events_by_feature
+    title: Unique Users per Feature
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: feature, type: nominal }
+        y: { field: unique_users, type: quantitative }
+
+tables:
+  top_users:
+    data: top_users
+    title: Most Active Users

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import yaml from 'js-yaml'
 import { VegaChart } from '@/components/charts/VegaChart'
 import { BigValue } from '@/components/charts/BigValue'
+import { DataTable } from '@/components/charts/DataTable'
 import { applyPreset } from '@/config/presets'
 import { useQueryEngine } from '@/engine/EngineContext'
 
@@ -18,7 +19,11 @@ interface ChartItem {
   chart: string
 }
 
-type LayoutItem = BigValueItem | ChartItem
+interface TableItem {
+  table: string
+}
+
+type LayoutItem = BigValueItem | ChartItem | TableItem
 
 interface RowLayout {
   row: LayoutItem[]
@@ -31,12 +36,18 @@ interface ChartDef {
   spec: Record<string, unknown>
 }
 
+interface TableDef {
+  data: string
+  title?: string
+}
+
 interface DashboardConfig {
   title?: string
   description?: string
   queries: Record<string, { sql: string }>
   layout: RowLayout[]
-  charts: Record<string, ChartDef>
+  charts?: Record<string, ChartDef>
+  tables?: Record<string, TableDef>
 }
 
 type QueryResults = Record<string, Record<string, unknown>[]>
@@ -47,6 +58,10 @@ function isBigValue(item: LayoutItem): item is BigValueItem {
 
 function isChartItem(item: LayoutItem): item is ChartItem {
   return 'chart' in item
+}
+
+function isTableItem(item: LayoutItem): item is TableItem {
+  return 'table' in item
 }
 
 export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPageProps) {
@@ -166,7 +181,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
             }
 
             if (isChartItem(item)) {
-              const chartDef = config.charts[item.chart]
+              const chartDef = config.charts?.[item.chart]
               if (!chartDef) return null
 
               const data = queryResults[chartDef.data] || []
@@ -182,6 +197,18 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
                     data={{ table: data }}
                     title={chartDef.title}
                   />
+                </div>
+              )
+            }
+
+            if (isTableItem(item)) {
+              const tableDef = config.tables?.[item.table]
+              if (!tableDef) return null
+
+              const data = queryResults[tableDef.data] || []
+              return (
+                <div key={itemIdx} className="flex-1 min-w-0">
+                  <DataTable data={data} title={tableDef.title} />
                 </div>
               )
             }
