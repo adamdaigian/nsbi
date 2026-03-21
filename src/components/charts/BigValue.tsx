@@ -1,9 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChartContainer } from "./ChartContainer";
 import { Delta } from "./Delta";
-import { Sparkline } from "./Sparkline";
 import { formatValue } from "@/lib/format";
 
 interface BigValueProps {
@@ -30,7 +28,7 @@ export function BigValue({
   data,
   value,
   comparison,
-  sparklineField,
+  // sparklineField unused until Sparkline is reimplemented (Task 10)
   format,
   comparisonFormat,
   isUpGood = true,
@@ -46,31 +44,35 @@ export function BigValue({
     row && comparison ? Number(resolveField(row, comparison)) : undefined;
 
   return (
-    <ChartContainer
-      title={title}
-      subtitle={subtitle}
-      height={height}
-      empty={isEmpty}
+    <div
+      className="rounded-[8px] border border-border bg-card p-4"
+      style={{ minHeight: height }}
     >
-      <div className="flex flex-col items-start gap-2">
-        <span className="text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] text-[#FFFFFF]">
-          {formatValue(mainValue, format)}
-        </span>
+      {(title || subtitle) && (
+        <div className="mb-2">
+          {title && <h3 className="text-[13px] font-medium text-foreground">{title}</h3>}
+          {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
+        </div>
+      )}
+      {isEmpty ? (
+        <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
+          No data
+        </div>
+      ) : (
+        <div className="flex flex-col items-start gap-2">
+          <span className="text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
+            {formatValue(mainValue, format)}
+          </span>
 
-        {compValue != null && !Number.isNaN(compValue) && (
-          <Delta
-            value={compValue}
-            format={comparisonFormat}
-            isUpGood={isUpGood}
-          />
-        )}
-
-        {sparklineField && data.length > 1 && (
-          <div className="mt-2">
-            <Sparkline data={data} y={sparklineField} width={120} height={32} />
-          </div>
-        )}
-      </div>
-    </ChartContainer>
+          {compValue != null && !Number.isNaN(compValue) && (
+            <Delta
+              value={compValue}
+              format={comparisonFormat}
+              isUpGood={isUpGood}
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }

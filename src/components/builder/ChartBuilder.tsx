@@ -6,27 +6,21 @@ import { FormatPicker } from "./FormatPicker";
 import { ResultsTable } from "./ResultsTable";
 import { SchemaProvider, useSchema } from "@/components/schema/SchemaContext";
 import { useQueryEngine } from "@/engine/EngineContext";
-import { pageSpecToMDX } from "@/builder/codegen";
+// TODO: reconnect after YAML config parser
+// import { pageSpecToMDX } from "@/builder/codegen";
 import type { ChartSpec } from "@/builder/types";
 
-// Import chart components directly for live preview (no MDX round-trip)
-import { LineChart } from "@/components/charts/LineChart";
-import { AreaChart } from "@/components/charts/AreaChart";
-import { BarChart } from "@/components/charts/BarChart";
-import { ScatterPlot } from "@/components/charts/ScatterPlot";
+// TODO: reconnect after YAML config parser - chart preview will use VegaChart
+// Previously imported LineChart, AreaChart, BarChart, ScatterPlot, Sparkline from echarts components
+
 import { DataTable } from "@/components/charts/DataTable";
 import { BigValue } from "@/components/charts/BigValue";
-import { Sparkline } from "@/components/charts/Sparkline";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CHART_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  LineChart,
-  AreaChart,
-  BarChart,
-  ScatterPlot,
+  // TODO: reconnect after YAML config parser - use VegaChart presets
   DataTable,
   BigValue,
-  Sparkline,
 };
 
 interface QueryResult {
@@ -46,7 +40,7 @@ interface LiveChartPreviewProps {
 function LiveChartPreview({ variant, data, xAxis, yAxes, series, format }: LiveChartPreviewProps) {
   if (!variant) {
     return (
-      <div className="flex items-center justify-center h-full text-[12px] text-[#666]">
+      <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
         Select a chart type to see preview
       </div>
     );
@@ -54,7 +48,7 @@ function LiveChartPreview({ variant, data, xAxis, yAxes, series, format }: LiveC
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-[12px] text-[#666]">
+      <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
         Run a query to see chart preview
       </div>
     );
@@ -63,8 +57,8 @@ function LiveChartPreview({ variant, data, xAxis, yAxes, series, format }: LiveC
   const ChartComponent = CHART_COMPONENTS[variant.type];
   if (!ChartComponent) {
     return (
-      <div className="flex items-center justify-center h-full text-[12px] text-[#666]">
-        Unsupported chart type
+      <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
+        Chart preview being migrated to Vega-Lite
       </div>
     );
   }
@@ -117,12 +111,12 @@ function ChartBuilderInner() {
   const [sql, setSql] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Query results — persist across chart creation
+  // Query results -- persist across chart creation
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
   const [queryLoading, setQueryLoading] = useState(false);
   const [queryError, setQueryError] = useState<string | null>(null);
 
-  // Chart config — variant includes type + implied props (stacked, horizontal)
+  // Chart config -- variant includes type + implied props (stacked, horizontal)
   const [selectedVariant, setSelectedVariant] = useState<ChartVariant | null>(null);
   const [xAxis, setXAxis] = useState("");
   const [yAxes, setYAxes] = useState<string[]>([""]);
@@ -182,9 +176,9 @@ function ChartBuilderInner() {
       const props = buildChartProps(selectedVariant, xAxis, yAxes, series, format);
       const chart: ChartSpec = {
         id: generateChartId(),
-        type: selectedVariant.type,
-        queryRef: queryName,
-        props,
+        type: selectedVariant.type as ChartSpec["type"],
+        dataSource: queryName,
+        spec: props,
       };
       dispatch({ type: "ADD_CHART", chart });
     }
@@ -197,41 +191,22 @@ function ChartBuilderInner() {
     setFormat("");
   }, [dispatch, queryName, sql, selectedVariant, xAxis, yAxes, series, format, state.pageSpec.queries.length]);
 
-  // Build a live page spec that includes the current (uncommitted) chart config
-  const livePageSpec = (() => {
-    const spec = { ...state.pageSpec, queries: [...state.pageSpec.queries], layout: [...state.pageSpec.layout] };
-
-    if (queryName && sql) {
-      const nameExists = spec.queries.some((q) => q.name === queryName);
-      const sqlExists = spec.queries.some((q) => q.type === "sql" && q.sql === sql);
-      if (!nameExists && !sqlExists) {
-        spec.queries = [...spec.queries, { name: queryName, type: "sql" as const, sql }];
-      }
-    }
-
-    if (selectedVariant && queryName) {
-      const props = buildChartProps(selectedVariant, xAxis, yAxes, series, format);
-      spec.layout = [...spec.layout, { id: "__live__", type: selectedVariant.type, queryRef: queryName, props } as ChartSpec];
-    }
-
-    return spec;
-  })();
-
-  const mdxOutput = pageSpecToMDX(livePageSpec);
+  // TODO: reconnect after YAML config parser
+  const mdxOutput = "// Code generation being migrated to YAML config";
 
   return (
     <BuilderContext.Provider value={{ state, dispatch }}>
       <div className="h-full overflow-y-auto p-4 space-y-4">
-        {/* ═══ CARD 1: SQL Query + Results ═══ */}
-        <div className="rounded-lg border border-[rgba(148,148,148,0.12)] bg-[rgba(64,64,64,0.03)] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[rgba(148,148,148,0.08)] bg-[rgba(64,64,64,0.05)]">
-            <span className="text-[12px] font-medium text-[#FFFFFF]">Dataframe</span>
+        {/* SQL Query + Results */}
+        <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border/70 bg-muted/30">
+            <span className="text-[12px] font-medium text-foreground">Dataframe</span>
             <div className="flex-1" />
             <input
               type="text"
               value={queryName}
               onChange={(e) => setQueryName(e.target.value)}
-              className="bg-[rgba(64,64,64,0.2)] rounded px-2 py-0.5 text-[11px] text-[#FFFFFF] outline-none focus:ring-1 focus:ring-[#5A7B8F] w-[120px]"
+              className="bg-accent rounded px-2 py-0.5 text-[11px] text-foreground outline-none focus:ring-1 focus:ring-primary w-[120px]"
               placeholder="Query name"
             />
             {schema && schema.tables.length > 0 && (
@@ -244,7 +219,7 @@ function ChartBuilderInner() {
                     e.target.value = "";
                   }
                 }}
-                className="bg-[rgba(64,64,64,0.2)] rounded px-2 py-0.5 text-[11px] text-[#949494] outline-none"
+                className="bg-accent rounded px-2 py-0.5 text-[11px] text-muted-foreground outline-none"
               >
                 <option value="">Insert table...</option>
                 {schema.tables.map((t) => (
@@ -255,7 +230,7 @@ function ChartBuilderInner() {
             <button
               onClick={runQuery}
               disabled={!sql.trim() || queryLoading}
-              className="flex items-center gap-1.5 px-3 py-1 rounded text-[12px] bg-[rgba(90,123,143,0.2)] text-[#5A7B8F] hover:bg-[rgba(90,123,143,0.3)] disabled:opacity-40 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1 rounded text-[12px] bg-primary/20 text-primary hover:bg-primary/30 disabled:opacity-40 transition-colors"
             >
               <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
@@ -264,7 +239,7 @@ function ChartBuilderInner() {
             </button>
           </div>
 
-          <div className="border-b border-[rgba(148,148,148,0.06)]">
+          <div className="border-b border-border/50">
             <textarea
               ref={textareaRef}
               value={sql}
@@ -273,7 +248,7 @@ function ChartBuilderInner() {
               placeholder="SELECT * FROM ..."
               spellCheck={false}
               rows={5}
-              className="w-full bg-transparent px-4 py-3 text-[13px] text-[#FFFFFF] font-mono leading-[1.6] outline-none resize-y placeholder:text-[#444] min-h-[80px]"
+              className="w-full bg-transparent px-4 py-3 text-[13px] text-foreground font-mono leading-[1.6] outline-none resize-y placeholder:text-muted-foreground min-h-[80px]"
             />
           </div>
 
@@ -287,18 +262,18 @@ function ChartBuilderInner() {
           </div>
         </div>
 
-        {/* ═══ CARD 2: Chart Builder ═══ */}
-        <div className="rounded-lg border border-[rgba(148,148,148,0.12)] bg-[rgba(64,64,64,0.03)] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[rgba(148,148,148,0.08)] bg-[rgba(64,64,64,0.05)]">
-            <span className="text-[12px] font-medium text-[#FFFFFF]">Chart</span>
+        {/* Chart Builder */}
+        <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border/70 bg-muted/30">
+            <span className="text-[12px] font-medium text-foreground">Chart</span>
             <div className="flex-1" />
-            <div className="flex items-center rounded bg-[rgba(64,64,64,0.15)] p-0.5">
+            <div className="flex items-center rounded bg-accent p-0.5">
               <button
                 onClick={() => setBottomView("chart")}
                 className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
                   bottomView === "chart"
-                    ? "bg-[rgba(90,123,143,0.2)] text-[#5A7B8F]"
-                    : "text-[#666] hover:text-[#949494]"
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-muted-foreground"
                 }`}
               >
                 Builder
@@ -307,8 +282,8 @@ function ChartBuilderInner() {
                 onClick={() => setBottomView("code")}
                 className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
                   bottomView === "code"
-                    ? "bg-[rgba(90,123,143,0.2)] text-[#5A7B8F]"
-                    : "text-[#666] hover:text-[#949494]"
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-muted-foreground"
                 }`}
               >
                 Code
@@ -318,25 +293,25 @@ function ChartBuilderInner() {
               type="text"
               value={state.pageSpec.title}
               onChange={(e) => dispatch({ type: "SET_TITLE", title: e.target.value })}
-              className="bg-[rgba(64,64,64,0.2)] rounded px-2 py-0.5 text-[11px] text-[#FFFFFF] outline-none focus:ring-1 focus:ring-[#5A7B8F] w-[140px]"
+              className="bg-accent rounded px-2 py-0.5 text-[11px] text-foreground outline-none focus:ring-1 focus:ring-primary w-[140px]"
               placeholder="Dashboard title"
             />
             <button
               onClick={addToPage}
               disabled={!queryName || (!sql && !selectedVariant)}
-              className="px-3 py-1 rounded text-[11px] bg-[rgba(90,123,143,0.2)] text-[#5A7B8F] hover:bg-[rgba(90,123,143,0.3)] disabled:opacity-40 transition-colors"
+              className="px-3 py-1 rounded text-[11px] bg-primary/20 text-primary hover:bg-primary/30 disabled:opacity-40 transition-colors"
             >
               Add to Dashboard
             </button>
           </div>
 
-          {/* Builder view — always mounted, hidden via CSS */}
+          {/* Builder view */}
           <div className={`flex min-h-[400px] ${bottomView !== "chart" ? "hidden" : ""}`}>
             {/* Left: Data + Chart Type */}
-            <div className="w-[240px] shrink-0 border-r border-[rgba(148,148,148,0.08)] overflow-y-auto">
-              <div className="px-3 py-2 border-b border-[rgba(148,148,148,0.06)]">
+            <div className="w-[240px] shrink-0 border-r border-border/70 overflow-y-auto">
+              <div className="px-3 py-2 border-b border-border/50">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-medium text-[#949494] uppercase tracking-wider">Data</span>
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Data</span>
                 </div>
                 {availableColumns.length > 0 ? (
                   <div className="space-y-0.5">
@@ -346,9 +321,9 @@ function ChartBuilderInner() {
                       return (
                         <div
                           key={col}
-                          className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] text-[#FFFFFF] hover:bg-[rgba(64,64,64,0.1)] cursor-default"
+                          className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] text-foreground hover:bg-muted/60 cursor-default"
                         >
-                          <span className={`text-[10px] ${isNumeric ? "text-[#5A7B8F]" : "text-[#949494]"}`}>
+                          <span className={`text-[10px] ${isNumeric ? "text-primary" : "text-muted-foreground"}`}>
                             {isNumeric ? "#" : "A"}
                           </span>
                           <span className="truncate">{col}</span>
@@ -357,18 +332,18 @@ function ChartBuilderInner() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-[10px] text-[#666]">Run a query to see columns</p>
+                  <p className="text-[10px] text-muted-foreground">Run a query to see columns</p>
                 )}
               </div>
 
-              <div className="px-3 py-2 border-b border-[rgba(148,148,148,0.06)]">
-                <span className="text-[10px] font-medium text-[#949494] uppercase tracking-wider block mb-2">Chart Type</span>
+              <div className="px-3 py-2 border-b border-border/50">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-2">Chart Type</span>
                 <ChartTypeSelector selected={selectedVariant} onSelect={setSelectedVariant} />
               </div>
 
               {state.pageSpec.layout.length > 0 && (
                 <div className="px-3 py-2">
-                  <span className="text-[10px] font-medium text-[#949494] uppercase tracking-wider block mb-2">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-2">
                     Dashboard ({state.pageSpec.layout.length})
                   </span>
                   <div className="space-y-1">
@@ -378,14 +353,14 @@ function ChartBuilderInner() {
                       return (
                         <div
                           key={chart.id}
-                          className="flex items-center justify-between px-2 py-1 rounded bg-[rgba(64,64,64,0.1)] text-[10px]"
+                          className="flex items-center justify-between px-2 py-1 rounded bg-muted/60 text-[10px]"
                         >
-                          <span className="text-[#FFFFFF] truncate">
-                            {chart.type} / {chart.queryRef}
+                          <span className="text-foreground truncate">
+                            {chart.type} / {chart.dataSource}
                           </span>
                           <button
                             onClick={() => dispatch({ type: "REMOVE_CHART", id: chart.id })}
-                            className="text-[#666] hover:text-[hsl(0,84%,60%)] ml-1 shrink-0"
+                            className="text-muted-foreground hover:text-destructive ml-1 shrink-0"
                           >
                             x
                           </button>
@@ -397,20 +372,20 @@ function ChartBuilderInner() {
               )}
             </div>
 
-            {/* Middle: Axis config — only show when a chart variant is selected */}
+            {/* Middle: Axis config */}
             {selectedVariant && chartType !== "DataTable" && (
-              <div className="w-[220px] shrink-0 border-r border-[rgba(148,148,148,0.08)] overflow-y-auto p-3 space-y-3">
+              <div className="w-[220px] shrink-0 border-r border-border/70 overflow-y-auto p-3 space-y-3">
                 {chartType !== "BigValue" && (
                   <>
                     <div>
-                      <label className="text-[10px] font-medium text-[#949494] uppercase tracking-wider block mb-1">X-axis</label>
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">X-axis</label>
                       <AxisMapper label="" value={xAxis} columns={availableColumns} onChange={setXAxis} />
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="text-[10px] font-medium text-[#949494] uppercase tracking-wider">Y-axis</label>
-                        <button onClick={addYAxis} className="text-[10px] text-[#5A7B8F] hover:text-[#FFFFFF]">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Y-axis</label>
+                        <button onClick={addYAxis} className="text-[10px] text-primary hover:text-foreground">
                           + Y-axis
                         </button>
                       </div>
@@ -421,7 +396,7 @@ function ChartBuilderInner() {
                               <AxisMapper label="" value={yVal} columns={availableColumns} onChange={(v) => updateYAxis(idx, v)} />
                             </div>
                             {yAxes.length > 1 && (
-                              <button onClick={() => removeYAxis(idx)} className="text-[10px] text-[#666] hover:text-[hsl(0,84%,60%)] shrink-0">
+                              <button onClick={() => removeYAxis(idx)} className="text-[10px] text-muted-foreground hover:text-destructive shrink-0">
                                 x
                               </button>
                             )}
@@ -431,7 +406,7 @@ function ChartBuilderInner() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-medium text-[#949494] uppercase tracking-wider block mb-1">Color by</label>
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Color by</label>
                       <AxisMapper label="" value={series} columns={availableColumns} onChange={setSeries} optional />
                     </div>
                   </>
@@ -439,13 +414,13 @@ function ChartBuilderInner() {
 
                 {chartType === "BigValue" && (
                   <div>
-                    <label className="text-[10px] font-medium text-[#949494] uppercase tracking-wider block mb-1">Value</label>
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Value</label>
                     <AxisMapper label="" value={yAxes[0] ?? ""} columns={availableColumns} onChange={(v) => setYAxes([v])} />
                   </div>
                 )}
 
                 <div>
-                  <label className="text-[10px] font-medium text-[#949494] uppercase tracking-wider block mb-1">Format</label>
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">Format</label>
                   <FormatPicker label="" value={format} onChange={setFormat} />
                 </div>
               </div>
@@ -464,10 +439,10 @@ function ChartBuilderInner() {
             </div>
           </div>
 
-          {/* Code view — always mounted, hidden via CSS */}
+          {/* Code view */}
           <div className={`min-h-[400px] overflow-auto ${bottomView !== "code" ? "hidden" : ""}`}>
-            <pre className="p-4 text-[12px] text-[#949494] font-mono whitespace-pre-wrap break-words leading-[1.6]">
-              {mdxOutput || "// Add queries and charts to generate MDX"}
+            <pre className="p-4 text-[12px] text-muted-foreground font-mono whitespace-pre-wrap break-words leading-[1.6]">
+              {mdxOutput || "// Add queries and charts to generate code"}
             </pre>
           </div>
         </div>

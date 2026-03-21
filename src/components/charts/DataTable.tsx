@@ -11,7 +11,7 @@ import {
   createColumnHelper,
   type SortingState,
 } from "@tanstack/react-table";
-import { ChartContainer } from "./ChartContainer";
+// TODO: reconnect after YAML config parser (ChartContainer was removed)
 
 interface DataTableProps {
   data: Record<string, unknown>[];
@@ -46,7 +46,7 @@ export function DataTable({
         header: name,
         cell: (info) => {
           const val = info.getValue();
-          if (val == null) return <span className="text-[#949494]/50">null</span>;
+          if (val == null) return <span className="text-muted-foreground/50">null</span>;
           if (val instanceof Date) return val.toLocaleDateString();
           if (typeof val === "object") return JSON.stringify(val);
           return `${val as string | number | boolean}`;
@@ -69,11 +69,9 @@ export function DataTable({
   });
 
   return (
-    <ChartContainer
-      title={title}
-      subtitle={subtitle}
-      height={height}
-      empty={data.length === 0}
+    <div
+      className="rounded-[8px] border border-border bg-card p-4"
+      style={{ minHeight: height }}
     >
       <div className="flex flex-col gap-3" style={{ minHeight: height }}>
         <div>
@@ -82,7 +80,7 @@ export function DataTable({
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             placeholder="Search..."
-            className="h-[36px] w-full max-w-[240px] rounded-[4px] border border-[rgba(148,148,148,0.12)] bg-[rgba(0,0,0,0.2)] px-3 py-2 text-[14px] text-[#FFFFFF] placeholder:text-[#949494]/50 focus:outline-none focus:ring-1 focus:ring-[rgba(90,123,143,0.5)]"
+            className="h-[36px] w-full max-w-[240px] rounded-[4px] border border-border bg-black/20 px-3 py-2 text-[14px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
           />
         </div>
 
@@ -95,7 +93,7 @@ export function DataTable({
                     <th
                       key={header.id}
                       onClick={header.column.getToggleSortingHandler()}
-                      className="cursor-pointer select-none whitespace-nowrap border-b border-[rgba(148,148,148,0.12)] px-3 py-2 text-left font-medium text-[#949494] hover:text-[#FFFFFF] transition-colors"
+                      className="cursor-pointer select-none whitespace-nowrap border-b border-border px-3 py-2 text-left font-medium text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <span className="inline-flex items-center gap-1">
                         {flexRender(
@@ -116,12 +114,12 @@ export function DataTable({
               {table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-[rgba(148,148,148,0.06)] hover:bg-[rgba(64,64,64,0.15)] transition-colors"
+                  className="border-b border-border/50 hover:bg-accent transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="whitespace-nowrap px-3 py-2 text-[#FFFFFF]"
+                      className="whitespace-nowrap px-3 py-2 text-foreground"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -135,7 +133,7 @@ export function DataTable({
           </table>
         </div>
 
-        <div className="flex items-center justify-between text-[12px] text-[#949494]">
+        <div className="flex items-center justify-between text-[12px] text-muted-foreground">
           <span>
             Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()}
@@ -146,20 +144,20 @@ export function DataTable({
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="rounded-[4px] border border-[rgba(148,148,148,0.12)] px-2 py-1 text-[12px] text-[#949494] hover:text-[#FFFFFF] hover:border-[rgba(148,148,148,0.2)] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="rounded-[4px] border border-border px-2 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:border-border disabled:opacity-40 disabled:pointer-events-none transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="rounded-[4px] border border-[rgba(148,148,148,0.12)] px-2 py-1 text-[12px] text-[#949494] hover:text-[#FFFFFF] hover:border-[rgba(148,148,148,0.2)] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="rounded-[4px] border border-border px-2 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:border-border disabled:opacity-40 disabled:pointer-events-none transition-colors"
             >
               Next
             </button>
           </div>
         </div>
       </div>
-    </ChartContainer>
+    </div>
   );
 }

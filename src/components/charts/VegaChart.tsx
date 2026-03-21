@@ -55,7 +55,7 @@ export function VegaChart({
     if (!('data' in parsedSpec)) {
       const firstKey = Object.keys(parsedData)[0]
       if (firstKey) {
-        (fullSpec as Record<string, unknown>).data = { name: firstKey }
+        (fullSpec as unknown as Record<string, unknown>).data = { name: firstKey }
       }
     }
 
