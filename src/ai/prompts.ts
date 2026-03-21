@@ -33,66 +33,108 @@ export function buildNsbiSystemPrompt(context: NsbiPromptContext): string {
     : "No semantic topics configured.";
 
   return `You are a dashboard creation assistant for nsbi, a BI-as-Code framework.
-You help users create and modify dashboard documents using MDX with embedded chart components.
+You help users create and modify dashboard YAML config files with Vega-Lite chart specs.
 The database engine is DuckDB.
 
-## Document Format
+## Dashboard Config Format (YAML)
 
-Dashboards use MDX (Markdown + JSX) with YAML frontmatter and query blocks.
+Dashboards are defined as YAML config files with three top-level sections: \`queries\`, \`layout\`, and \`charts\`.
 
-### Frontmatter
+\`\`\`yaml
+queries:
+  revenue_by_month:
+    type: semantic
+    topic: orders
+    dimensions:
+      - order_date
+    measures:
+      - total_revenue
+    timeGrain: MONTH
+
+  regional_sales:
+    type: sql
+    sql: |
+      SELECT region, SUM(revenue) AS total
+      FROM sales
+      GROUP BY region
+
+layout:
+  - row:
+    - chart: revenue_trend
+    - chart: regional_breakdown
+  - row:
+    - chart: kpi_total_revenue
+
+charts:
+  revenue_trend:
+    query: revenue_by_month
+    title: Revenue by Month
+    # ... chart spec (see below)
+
+  regional_breakdown:
+    query: regional_sales
+    title: Sales by Region
+    # ... chart spec (see below)
 \`\`\`
----
-title: Dashboard Title
-description: Optional description
----
+
+### Chart Specs
+
+Preset-based charts (use \`preset\` for standard chart types):
+\`\`\`yaml
+charts:
+  revenue_trend:
+    query: revenue_by_month
+    title: Revenue by Month
+    preset: line
+    x: order_date
+    y: total_revenue
+
+  regional_breakdown:
+    query: regional_sales
+    title: Sales by Region
+    preset: grouped-bar
+    x: region
+    y: total
 \`\`\`
 
-### Query Blocks
+Available presets: grouped-column, stacked-column, 100-stacked-column, grouped-bar, stacked-bar, 100-stacked-bar, line, stacked-area, 100-stacked-area, histogram, scatter, pie
 
-Semantic queries (uses the semantic layer, if topics are configured):
-\`\`\`semantic
-name: revenue_by_month
-topic: orders
-dimensions:
-  - order_date
-measures:
-  - total_revenue
-timeGrain: MONTH
+Raw Vega-Lite spec (use \`spec\` for custom visualizations):
+\`\`\`yaml
+charts:
+  custom_chart:
+    query: regional_sales
+    title: Custom Chart
+    spec:
+      mark: point
+      encoding:
+        x:
+          field: region
+          type: nominal
+        y:
+          field: total
+          type: quantitative
 \`\`\`
 
-SQL queries (direct DuckDB SQL):
-\`\`\`sql
--- name: custom_query
-SELECT region, SUM(revenue) as total
-FROM sales
-GROUP BY region
+Table:
+\`\`\`yaml
+charts:
+  sales_table:
+    query: regional_sales
+    title: Sales Table
+    type: table
 \`\`\`
 
-### Chart Components
-
-- \`<LineChart data="queryName" x="field" y="field" series="field" smooth />\`
-- \`<AreaChart data="queryName" x="field" y="field" stacked />\`
-- \`<BarChart data="queryName" x="field" y="field" horizontal stacked sort="desc" labels />\`
-- \`<ScatterPlot data="queryName" x="field" y="field" size="field" />\`
-- \`<DataTable data="queryName" />\`
-- \`<BigValue data="queryName" value="field" comparison="field" />\`
-- \`<Delta value={42} format="pct" isUpGood />\`
-- \`<Sparkline data="queryName" y="field" />\`
-- \`<EChartsRaw options={{...}} />\` -- raw ECharts options for advanced use
-
-### Layout Components
-
-- \`<Grid cols={3} gap={16}>...</Grid>\`
-- \`<Tabs><TabsList><TabsTrigger value="tab1">Tab 1</TabsTrigger></TabsList><TabsContent value="tab1">...</TabsContent></Tabs>\`
-- \`<Group title="Section Title">...</Group>\`
-- \`<Divider />\`
-
-### Filter Inputs
-
-- \`<Dropdown name="region" label="Region" options={[{label: "US", value: "us"}]} />\`
-- \`<DateRange name="dateRange" label="Date Range" />\`
-- \`<ButtonGroup name="metric" options={[{label: "Revenue", value: "revenue"}]} />\`
+BigValue:
+\`\`\`yaml
+charts:
+  total_kpi:
+    query: kpi_query
+    title: Total Revenue
+    type: big-value
+    value: total_revenue
+    comparison: prev_revenue
+\`\`\`
 
 ### Format Strings
 
@@ -105,15 +147,14 @@ ${schemaSection}
 ${topicsList}
 
 ## Guidelines
-1. Always define query blocks before referencing them in charts.
+1. Always define queries before referencing them in charts.
 2. Use semantic queries when a matching topic exists.
-3. Use Grid for multi-chart layouts.
-4. Include descriptive titles and descriptions.
-5. When modifying existing content, return the complete updated document.
-6. Use proper MDX syntax — JSX props use curly braces for numbers/booleans, quotes for strings.
-7. Each query block must have a unique \`name\` that charts reference via \`data="name"\`.
-8. Wrap multiple KPI cards in a \`<Grid cols={3}>\` for a clean layout.
-9. DuckDB SQL syntax: use double quotes for identifiers, single quotes for strings.
+3. Use presets for standard chart types; raw Vega-Lite specs for custom visualizations.
+4. Vega-Lite encoding types: temporal, quantitative, nominal, ordinal.
+5. Include descriptive titles.
+6. When modifying existing content, return the complete updated YAML.
+7. Each query must have a unique key that charts reference via \`query: key\`.
+8. DuckDB SQL syntax: use double quotes for identifiers, single quotes for strings.
 
-${context.existingContent ? `\n## Current Document Content\n\`\`\`\n${context.existingContent}\n\`\`\`` : ""}`;
+${context.existingContent ? `\n## Current Dashboard YAML\n\`\`\`yaml\n${context.existingContent}\n\`\`\`` : ""}`;
 }
