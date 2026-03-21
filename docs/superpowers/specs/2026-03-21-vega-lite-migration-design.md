@@ -68,7 +68,24 @@ Vega-Lite JSON spec + data rows
   Mounted in React container with title/subtitle chrome
 ```
 
-**One React component: `<VegaChart>`** — takes a Vega-Lite spec, data, and theme config. This is the only rendering primitive. Everything else (builder, AI, config parser) produces specs that feed into it.
+**One React component: `<VegaChart>`** — the only rendering primitive. Everything else (builder, AI, config parser) produces specs that feed into it.
+
+Props interface:
+
+| Prop | Type | Description |
+|---|---|---|
+| `spec` | Partial Vega-Lite spec (`mark` + `encoding`) | The chart definition — not a full `TopLevelSpec`. The component assembles the full spec internally. |
+| `data` | `Record<string, unknown[]>` | Named datasets injected into the spec. |
+| `title` | `string` (optional) | Rendered as React chrome above the chart, not inside the Vega-Lite spec. |
+| `subtitle` | `string` (optional) | Rendered as React chrome below the title. |
+| `width` / `height` | `number \| "container"` (optional) | Defaults to `"container"` (responsive to parent). |
+| `className` | `string` (optional) | For layout styling on the wrapper div. |
+
+The component is responsible for:
+- Assembling the full `TopLevelSpec` from the partial spec + data + theme config
+- Validating the 10K row cap (throws before rendering)
+- Calling `vega-embed` and cleaning up via `result.finalize()` on unmount
+- Catching `vega-embed` errors and rendering an inline error message
 
 ### Theme System
 
@@ -96,6 +113,22 @@ Vega-Lite specs reference named datasets. The query engine (DuckDB native or WAS
 ```
 
 This replaces the current `QueryProvider` / `withQueryData` HOC pattern.
+
+### Config-to-Spec Assembly
+
+The YAML config format separates `data`, `title`, and `spec` into sibling keys for readability. A thin assembly function reconstitutes them into a full Vega-Lite `TopLevelSpec` before passing to `<VegaChart>`. This is not a sugar layer — it is mechanical key merging with no transformation logic:
+
+```
+YAML chart config → assembleSpec() → full TopLevelSpec → <VegaChart>
+```
+
+`assembleSpec()` does:
+1. Takes the partial spec (`mark` + `encoding`) from the YAML `spec` key
+2. Injects the named dataset reference from the `data` key
+3. Applies the global Northstar Vega theme config
+4. Adds `$schema` and defaults (`width: "container"`, `height: "container"`)
+
+This lives in the config parser, not in `<VegaChart>` — the component always receives an assembled spec.
 
 ### Dashboard Config Format
 
@@ -141,6 +174,7 @@ charts:
 
 ## What Gets Removed
 
+ECharts chart components and dependencies:
 - `echarts`, `echarts-for-react` dependencies
 - `src/components/charts/echarts-core.ts` (tree-shaking config)
 - `src/components/charts/LineChart.tsx`
@@ -151,12 +185,33 @@ charts:
 - `src/components/charts/Sparkline.tsx` (reimplemented with Vega-Lite)
 - `useEChartsTheme` hook
 
+Infrastructure replaced by the new architecture:
+- `src/components/charts/ChartContainer.tsx` — absorbed into `<VegaChart>` (title/subtitle chrome + error boundary)
+- `src/components/charts/ChartError.tsx` — replaced by inline error rendering in `<VegaChart>`
+- `src/components/charts/ChartErrorBoundary.tsx` — replaced by `vega-embed` error catching in `<VegaChart>`
+- `src/components/QueryContext.tsx` — replaced by YAML config `queries` section + direct data passing
+- `src/components/withQueryData.tsx` — replaced by the config parser's data binding (no HOC needed)
+- `src/components/registry.ts` — obsolete; the MDX component registry is replaced by the YAML config parser
+
+Builder layers replaced:
+- `src/builder/codegen.ts` — builder now reads/writes Vega-Lite specs directly instead of generating MDX
+- `src/builder/parse-mdx.ts` — no MDX to parse; builder state is a mutable Vega-Lite spec object
+- `src/builder/sync.ts` — bidirectional sync is replaced by the spec being the single source of truth
+
 ## What Gets Added
 
 - `vega`, `vega-lite`, `vega-embed` dependencies
 - `src/components/charts/VegaChart.tsx` — single rendering component
 - `src/components/charts/vega-theme.ts` — Northstar theme as Vega config
-- Convenience presets (smart defaults for common chart types — not a compiler, just a utility that fills in reasonable `type` annotations and formatting defaults)
+- Convenience presets — functions that take a chart type string (e.g., `"stacked-bar"`) and return a partial Vega-Lite spec with reasonable defaults (stack mode, type annotations, format strings). Applied at config parse time by `assembleSpec()`. Not a compiler — just a shorthand so users can write `preset: stacked-bar` instead of manually setting `mark.type`, `encoding.y.stack`, etc.
+- `src/config/assemble-spec.ts` — the config-to-spec assembly function
+
+### Error Handling
+
+- **Row cap exceeded** — `<VegaChart>` checks `data` array lengths before calling `vega-embed`. If any dataset exceeds 10K rows, renders an inline error message with the count and the cap. No throw — graceful degradation so other charts on the dashboard still render.
+- **Malformed Vega-Lite spec** — `vega-embed` errors are caught and rendered as an inline error message inside the chart container, showing the Vega error text. Common in raw spec escape hatch usage.
+- **Missing data** — if a chart references a named dataset that wasn't provided, renders an inline error rather than a blank chart.
+- **No global error boundary** — errors are chart-local. A broken chart does not take down the dashboard.
 
 ## Resolved Decisions
 
@@ -178,7 +233,7 @@ charts:
 
 ### Chart Builder Scope
 
-**Constrained to 13 chart types** with a raw Vega-Lite spec escape hatch for anything beyond:
+**Constrained to 12 Vega-Lite chart types + Table** with a raw Vega-Lite spec escape hatch for anything beyond:
 
 | Category | Types |
 |---|---|
