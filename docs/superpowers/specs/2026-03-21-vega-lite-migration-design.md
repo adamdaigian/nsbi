@@ -16,7 +16,7 @@ Replace ECharts with Vega-Lite as the sole charting layer, using **Approach B: V
 - **Declarative JSON specs** — perfect fit for YAML config files, chart builder state, and LLM generation.
 - **LLM-friendly** — well-documented, massive training corpus. LLMs generate Vega-Lite specs reliably.
 - **Smaller bundle** — vega-lite + vega-embed is ~200KB vs ~300KB for tree-shaken ECharts.
-- **SVG by default** — better for export, print, and accessibility. Canvas available for large datasets.
+- **SVG rendering** — better for export, print, and accessibility.
 - **Native theming** — Vega config objects map directly to Northstar's design tokens.
 - **Ecosystem** — thousands of examples, excellent docs, active development.
 
@@ -63,7 +63,7 @@ Vega-Lite JSON spec + data rows
         |
   Northstar theme applied (colors, fonts, background)
         |
-  vega-embed renders to SVG (default) or Canvas (large datasets)
+  vega-embed renders to SVG (always — 10K row cap, error if exceeded)
         |
   Mounted in React container with title/subtitle chrome
 ```
@@ -158,10 +158,34 @@ charts:
 - `src/components/charts/vega-theme.ts` — Northstar theme as Vega config
 - Convenience presets (smart defaults for common chart types — not a compiler, just a utility that fills in reasonable `type` annotations and formatting defaults)
 
-## Open Questions
+## Resolved Decisions
 
-- **Interactivity model** — Vega-Lite supports selections, tooltips, and cross-filtering natively. How much of this should be exposed in the config format vs handled by the builder?
-- **Sparkline implementation** — render via Vega-Lite (consistent pipeline) or keep as pure SVG (lighter weight for inline use)?
-- **Large dataset threshold** — at what row count should rendering switch from SVG to Canvas?
-- **Config file format** — YAML vs TOML vs JSON for dashboard definitions?
-- **Chart builder scope** — full Vega-Lite editor (like vega-editor) or constrained to common chart types with a "raw spec" escape hatch?
+### Interactivity Model
+
+**Moderate exposure.** Tooltips enabled by default. Single-chart selections (brush, click) configurable in YAML. Cross-chart filtering is builder-only — too complex to express declaratively, and the builder is the right place for wiring charts together.
+
+### Sparkline Implementation
+
+**Vega-Lite.** Rendered via the same `<VegaChart>` component as all other charts (minimal spec: inline line, no axes/legend). Vega-Lite is already loaded for other charts so the marginal cost is zero, and one rendering pipeline means the theme system works everywhere.
+
+### Data Row Limit
+
+**10,000 row hard cap.** SVG-only rendering — no Canvas path. If a query returns more than 10K rows, throw a clear error. BI dashboards work with aggregated data; 10K rows is more than sufficient. Keeps the rendering layer simple.
+
+### Config File Format
+
+**YAML.** Already used for the semantic layer. Readable, supports comments, handles nested Vega-Lite specs well. Consistent with the rest of the project.
+
+### Chart Builder Scope
+
+**Constrained to 13 chart types** with a raw Vega-Lite spec escape hatch for anything beyond:
+
+| Category | Types |
+|---|---|
+| Column | Grouped, Stacked, 100% Stacked |
+| Bar | Grouped, Stacked, 100% Stacked |
+| Line & Area | Line, Stacked area, 100% Stacked area |
+| Other | Histogram, Scatter, Pie |
+| Table | Table (TanStack Table — not Vega-Lite) |
+
+12 Vega-Lite chart types + 1 TanStack Table type. The builder provides a guided UI for these; power users can drop to raw Vega-Lite specs for anything else.
