@@ -1,4 +1,5 @@
 import type { QueryEngine, QueryResult } from "./query-engine";
+import type { SchemaMetadata, TableSchema, TableColumn } from "@/types/schema";
 import * as duckdb from "@duckdb/duckdb-wasm";
 
 interface DataManifest {
@@ -119,6 +120,51 @@ export class WasmQueryEngine implements QueryEngine {
     }
 
     return { rows, columns };
+  }
+
+  async getSchema(): Promise<SchemaMetadata> {
+    if (!this.conn) throw new Error("WASM DuckDB not initialized");
+
+    // Get all tables
+    const tablesResult = await this.conn.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main' ORDER BY table_name",
+    );
+
+    const tables: TableSchema[] = [];
+
+    for (const row of tablesResult.toArray()) {
+      const tableName = row.table_name as string;
+
+      // Get columns
+      const colsResult = await this.conn.query(
+        `SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '${tableName}' ORDER BY ordinal_position`,
+      );
+
+      const columns: TableColumn[] = colsResult.toArray().map((col) => ({
+        name: col.column_name as string,
+        type: col.data_type as string,
+        nullable: (col.is_nullable as string) === "YES",
+      }));
+
+      // Get row count
+      let rowCount = 0;
+      try {
+        const countResult = await this.conn.query(
+          `SELECT COUNT(*) as cnt FROM "${tableName}"`,
+        );
+        const countRow = countResult.toArray()[0];
+        if (countRow) {
+          const val = countRow.cnt;
+          rowCount = typeof val === "bigint" ? Number(val) : (val as number);
+        }
+      } catch {
+        // ignore count errors
+      }
+
+      tables.push({ name: tableName, columns, rowCount, source: "wasm" });
+    }
+
+    return { tables, lastRefreshed: new Date().toISOString() };
   }
 
   async close(): Promise<void> {

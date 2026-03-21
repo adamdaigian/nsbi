@@ -16,15 +16,19 @@ export function useHotReload({
   onPageChange,
   onDataChange,
   onPagesUpdate,
+  disabled = false,
 }: {
   currentPage: string;
   onPageChange: () => void;
   onDataChange: () => void;
   onPagesUpdate?: () => void;
+  disabled?: boolean;
 }) {
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    if (disabled) return;
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const ws = new WebSocket(`${protocol}//${window.location.host}/__nsbi_ws`);
     wsRef.current = ws;
@@ -57,5 +61,5 @@ export function useHotReload({
       ws.close();
       wsRef.current = null;
     };
-  }, [currentPage, onPageChange, onDataChange, onPagesUpdate]);
+  }, [currentPage, onPageChange, onDataChange, onPagesUpdate, disabled]);
 }

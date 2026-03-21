@@ -2,14 +2,18 @@ import yaml from "js-yaml";
 import {
   documentFrontmatterSchema,
   sqlQueryBlockSchema,
+  semanticQueryBlockDocSchema,
   type ParsedDocument,
   type SQLQueryBlock,
+  type SemanticQueryBlockDoc,
+  type QueryBlock,
   type DocumentFrontmatter,
   type DocumentParseError,
 } from "@/types/document";
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
 const CODE_BLOCK_REGEX = /```sql\s*\n([\s\S]*?)```/g;
+const SEMANTIC_BLOCK_REGEX = /```semantic\s*\n([\s\S]*?)```/g;
 const TEMPLATE_VAR_REGEX = /\$\{(\w+)\}/g;
 
 /**
@@ -19,12 +23,16 @@ export function parseDocument(content: string): ParsedDocument {
   const errors: DocumentParseError[] = [];
 
   const frontmatter = extractFrontmatter(content, errors);
-  const queries = extractQueryBlocks(content, errors);
+  const sqlQueries = extractQueryBlocks(content, errors);
+  const semanticQueries = extractSemanticBlocks(content, errors);
+
+  const queries: QueryBlock[] = [...sqlQueries, ...semanticQueries];
 
   // Strip frontmatter and query blocks from content for MDX rendering
   const mdxContent = content
     .replace(FRONTMATTER_REGEX, "")
     .replace(/```sql\s*\n([\s\S]*?)```/g, "")
+    .replace(/```semantic\s*\n([\s\S]*?)```/g, "")
     .trim();
 
   return {
@@ -109,6 +117,60 @@ function extractQueryBlocks(
         type: "sql",
         sql,
         filterVariables: filterVariables.length > 0 ? filterVariables : undefined,
+      });
+    }
+  }
+
+  return blocks;
+}
+
+/**
+ * Extract ```semantic blocks from content.
+ * Each block contains YAML defining a semantic query.
+ */
+function extractSemanticBlocks(
+  content: string,
+  errors: DocumentParseError[],
+): SemanticQueryBlockDoc[] {
+  const blocks: SemanticQueryBlockDoc[] = [];
+  let match: RegExpExecArray | null;
+
+  SEMANTIC_BLOCK_REGEX.lastIndex = 0;
+
+  while ((match = SEMANTIC_BLOCK_REGEX.exec(content)) !== null) {
+    const blockContent = match[1]!;
+    const line = content.substring(0, match.index).split("\n").length;
+
+    try {
+      const raw = yaml.load(blockContent);
+      if (typeof raw !== "object" || raw === null) {
+        errors.push({
+          type: "query",
+          message: "Semantic block must contain valid YAML",
+          line,
+        });
+        continue;
+      }
+
+      const parsed = semanticQueryBlockDocSchema.safeParse({
+        ...(raw as Record<string, unknown>),
+        type: "semantic",
+      });
+
+      if (parsed.success) {
+        blocks.push(parsed.data);
+      } else {
+        errors.push({
+          type: "query",
+          message: `Invalid semantic block: ${parsed.error.issues.map((i) => i.message).join(", ")}`,
+          line,
+        });
+      }
+    } catch (e) {
+      errors.push({
+        type: "query",
+        message: `Semantic block YAML error: ${e instanceof Error ? e.message : String(e)}`,
+        line,
       });
     }
   }

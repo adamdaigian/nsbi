@@ -1,4 +1,5 @@
 import type { QueryEngine, QueryResult } from "./query-engine";
+import type { SchemaMetadata } from "@/types/schema";
 
 /**
  * Dev mode query engine — wraps existing fetch("/api/query") calls.
@@ -18,5 +19,14 @@ export class ServerQueryEngine implements QueryEngine {
 
     const data = (await res.json()) as QueryResult;
     return data;
+  }
+
+  async getSchema(): Promise<SchemaMetadata> {
+    const res = await fetch("/api/schema");
+    if (!res.ok) {
+      const errBody = (await res.json()) as { error: string };
+      throw new Error(errBody.error);
+    }
+    return (await res.json()) as SchemaMetadata;
   }
 }

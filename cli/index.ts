@@ -94,14 +94,18 @@ cli
     // 1. Initialize DuckDB and pre-execute all queries
     const { initDuckDB, executeQuery } = await import("@/engine/duckdb");
     const { parseDocument } = await import("@/engine/parser");
+    const { loadSemanticModel } = await import("@/semantic/loader");
+    const { compile: compileSemantic } = await import("@/semantic/compiler/index");
 
     if (fs.existsSync(dataDir)) {
       await initDuckDB(dataDir);
     }
 
+    // Load semantic model if models/ exists
+    const modelsDir = path.join(projectDir, config.models.dir);
+    const semanticModel = fs.existsSync(modelsDir) ? loadSemanticModel(modelsDir) : null;
+
     const outDir = path.resolve(config.build.outDir);
-    const nsbiDataDir = path.join(outDir, "_nsbi_data");
-    fs.mkdirSync(nsbiDataDir, { recursive: true });
 
     // 2. Scan all .mdx files, categorize queries, pre-execute static ones
     const mdxFiles = scanMdxFiles(pagesDir);
@@ -109,18 +113,22 @@ cli
 
     // Build page tree for sidebar
     const pageTree = scanPageTree(pagesDir, pagesDir);
-    fs.writeFileSync(
-      path.join(nsbiDataDir, "pages.json"),
-      JSON.stringify({ pages: pageTree }),
-    );
+
+    // Collect pre-rendered data in memory (written AFTER vite build to avoid being deleted)
+    const collectedPages: { pagePath: string; pageData: unknown; staticCount: number; filteredCount: number }[] = [];
+    const dataFilesToCopy: { src: string; name: string; type: string }[] = [];
 
     for (const file of mdxFiles) {
       const content = fs.readFileSync(file, "utf-8");
       const parsed = parseDocument(content);
       const pagePath = path.relative(pagesDir, file).replace(/\.mdx$/, "").replace(/\\/g, "/");
 
-      const staticQueries = parsed.queries.filter((q) => !q.filterVariables?.length);
-      const filteredQueriesOnPage = parsed.queries.filter((q) => q.filterVariables?.length);
+      const staticQueries = parsed.queries.filter((q) =>
+        q.type === "semantic" || !(q as { filterVariables?: string[] }).filterVariables?.length,
+      );
+      const filteredQueriesOnPage = parsed.queries.filter((q) =>
+        q.type !== "semantic" && (q as { filterVariables?: string[] }).filterVariables?.length,
+      );
       const pageHasFilters = filteredQueriesOnPage.length > 0;
 
       if (pageHasFilters) hasFilteredQueries = true;
@@ -129,56 +137,59 @@ cli
       const queryResults: Record<string, { rows: Record<string, unknown>[]; columns: { name: string; type: string }[] }> = {};
       for (const query of staticQueries) {
         try {
-          queryResults[query.name] = await executeQuery(query.sql);
+          if (query.type === "semantic") {
+            if (!semanticModel) {
+              console.warn(`[nsbi] Semantic query "${query.name}" in ${pagePath} skipped: no semantic model`);
+              queryResults[query.name] = { rows: [], columns: [] };
+              continue;
+            }
+            const sq = query as { topic: string; dimensions: string[]; measures: string[]; filters: unknown[]; timeGrain?: string; dateRange?: unknown; orderBy?: unknown[]; limit?: number };
+            const compiled = compileSemantic({
+              topicId: sq.topic,
+              dimensions: sq.dimensions ?? [],
+              measures: sq.measures ?? [],
+              filters: (sq.filters ?? []) as never[],
+              timeGrain: sq.timeGrain as never,
+              dateRange: sq.dateRange as never,
+              orderBy: sq.orderBy as never,
+              limit: sq.limit,
+            }, { model: semanticModel });
+            queryResults[query.name] = await executeQuery(compiled.sql);
+          } else {
+            queryResults[query.name] = await executeQuery((query as { sql: string }).sql);
+          }
         } catch (err) {
           console.warn(`[nsbi] Query "${query.name}" in ${pagePath} failed:`, err);
           queryResults[query.name] = { rows: [], columns: [] };
         }
       }
 
-      // Write per-page JSON with MDX content + pre-rendered results
-      const pageData = {
-        content,
-        queryResults,
-        hasFilteredQueries: pageHasFilters,
-      };
-
-      // Ensure subdirectories exist for nested pages
-      const pageJsonPath = path.join(nsbiDataDir, `${pagePath}.json`);
-      fs.mkdirSync(path.dirname(pageJsonPath), { recursive: true });
-      fs.writeFileSync(pageJsonPath, JSON.stringify(pageData));
+      collectedPages.push({
+        pagePath,
+        pageData: { content, queryResults, hasFilteredQueries: pageHasFilters },
+        staticCount: staticQueries.length,
+        filteredCount: filteredQueriesOnPage.length,
+      });
       console.log(`  [nsbi] Pre-rendered: ${pagePath} (${staticQueries.length} static, ${filteredQueriesOnPage.length} filtered)`);
     }
 
-    // 3. If any page has filters, copy data files + write manifest for WASM engine
+    // 3. If any page has filters, prepare data files for WASM engine
     if (hasFilteredQueries && fs.existsSync(dataDir)) {
-      console.log("  [nsbi] Copying data files for WASM engine...");
-      const manifest: { files: { name: string; type: string }[] } = { files: [] };
+      console.log("  [nsbi] Preparing data files for WASM engine...");
       const dataFiles = fs.readdirSync(dataDir);
-
       for (const file of dataFiles) {
         const ext = path.extname(file).toLowerCase();
         let fileType: string | null = null;
         if (ext === ".db") fileType = "db";
         else if (ext === ".csv") fileType = "csv";
         else if (ext === ".parquet") fileType = "parquet";
-
         if (fileType) {
-          fs.copyFileSync(
-            path.join(dataDir, file),
-            path.join(nsbiDataDir, file),
-          );
-          manifest.files.push({ name: file, type: fileType });
+          dataFilesToCopy.push({ src: path.join(dataDir, file), name: file, type: fileType });
         }
       }
-
-      fs.writeFileSync(
-        path.join(nsbiDataDir, "manifest.json"),
-        JSON.stringify(manifest),
-      );
     }
 
-    // 4. Run Vite build
+    // 4. Run Vite build (this empties the output directory)
     const { build } = await import("vite");
     const nsbiRoot = path.resolve(import.meta.dirname, "..");
 
@@ -192,7 +203,36 @@ cli
       },
     });
 
-    // 5. Generate hosting helpers
+    // 5. Write pre-rendered data AFTER vite build (so it doesn't get deleted)
+    const nsbiDataDir = path.join(outDir, "_nsbi_data");
+    fs.mkdirSync(nsbiDataDir, { recursive: true });
+
+    // Write page tree
+    fs.writeFileSync(
+      path.join(nsbiDataDir, "pages.json"),
+      JSON.stringify({ pages: pageTree }),
+    );
+
+    // Write per-page JSON files
+    for (const { pagePath, pageData } of collectedPages) {
+      const pageJsonPath = path.join(nsbiDataDir, `${pagePath}.json`);
+      fs.mkdirSync(path.dirname(pageJsonPath), { recursive: true });
+      fs.writeFileSync(pageJsonPath, JSON.stringify(pageData));
+    }
+
+    // Copy data files and write manifest
+    if (dataFilesToCopy.length > 0) {
+      const manifest = { files: dataFilesToCopy.map(({ name, type }) => ({ name, type })) };
+      for (const { src, name } of dataFilesToCopy) {
+        fs.copyFileSync(src, path.join(nsbiDataDir, name));
+      }
+      fs.writeFileSync(
+        path.join(nsbiDataDir, "manifest.json"),
+        JSON.stringify(manifest),
+      );
+    }
+
+    // 6. Generate hosting helpers
     // Netlify: _redirects for SPA fallback
     fs.writeFileSync(
       path.join(outDir, "_redirects"),

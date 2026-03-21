@@ -8,9 +8,11 @@ export interface FileWatcherOptions {
   httpServer: HttpServer;
   pagesDir: string;
   dataDir: string;
+  modelsDir?: string;
+  onModelsChange?: () => void;
 }
 
-export function startFileWatcher({ httpServer, pagesDir, dataDir }: FileWatcherOptions) {
+export function startFileWatcher({ httpServer, pagesDir, dataDir, modelsDir, onModelsChange }: FileWatcherOptions) {
   // WebSocket server on /ws path (avoids conflict with Vite's own WS)
   const wss = new WebSocketServer({ server: httpServer, path: "/__nsbi_ws" });
   const clients = new Set<WebSocket>();
@@ -79,5 +81,23 @@ export function startFileWatcher({ httpServer, pagesDir, dataDir }: FileWatcherO
     }
   });
 
-  console.log(`[nsbi] File watcher active (pages + data)`);
+  // Watch models directory for .yml/.yaml changes
+  if (modelsDir) {
+    const modelsWatcher = watch(path.join(modelsDir, "**/*.{yml,yaml}"), {
+      ignoreInitial: true,
+      awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
+    });
+
+    const handleModelChange = (filePath: string) => {
+      console.log(`[nsbi] Model file changed: ${path.basename(filePath)}`);
+      onModelsChange?.();
+      broadcast({ type: "data-change", path: filePath });
+    };
+
+    modelsWatcher.on("change", handleModelChange);
+    modelsWatcher.on("add", handleModelChange);
+    modelsWatcher.on("unlink", handleModelChange);
+  }
+
+  console.log(`[nsbi] File watcher active (pages + data${modelsDir ? " + models" : ""})`);
 }

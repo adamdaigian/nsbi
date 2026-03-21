@@ -22,11 +22,43 @@ export const sqlQueryBlockSchema = z.object({
 
 export type SQLQueryBlock = z.infer<typeof sqlQueryBlockSchema>;
 
+// ─── Semantic Query Blocks ──────────────────────────────────────────────────
+
+export const semanticQueryBlockDocSchema = z.object({
+  name: z.string(),
+  type: z.literal("semantic"),
+  topic: z.string(),
+  dimensions: z.array(z.string()).default([]),
+  measures: z.array(z.string()).default([]),
+  filters: z.array(z.object({
+    field: z.string(),
+    operator: z.string(),
+    value: z.unknown(),
+  })).default([]),
+  timeGrain: z.string().optional(),
+  dateRange: z.union([
+    z.object({ type: z.literal("relative"), amount: z.number(), unit: z.string() }),
+    z.object({ type: z.literal("absolute"), start: z.string(), end: z.string() }),
+    z.object({ type: z.literal("shortcut"), shortcut: z.string() }),
+  ]).optional(),
+  orderBy: z.array(z.object({
+    field: z.string(),
+    direction: z.enum(["asc", "desc"]).default("asc"),
+  })).optional(),
+  limit: z.number().optional(),
+});
+
+export type SemanticQueryBlockDoc = z.infer<typeof semanticQueryBlockDocSchema>;
+
+// ─── Union Query Block ──────────────────────────────────────────────────────
+
+export type QueryBlock = SQLQueryBlock | SemanticQueryBlockDoc;
+
 // ─── Parsed Document ─────────────────────────────────────────────────────────
 
 export interface ParsedDocument {
   frontmatter: DocumentFrontmatter;
-  queries: SQLQueryBlock[];
+  queries: QueryBlock[];
   content: string; // MDX content with frontmatter and query blocks stripped
   errors: DocumentParseError[];
 }

@@ -26,6 +26,16 @@ ORDER BY month, plan
 ```
 
 ```sql
+-- name: mrr_net_trend
+SELECT
+  month,
+  SUM(net_mrr) as net_mrr
+FROM revenue
+GROUP BY month
+ORDER BY month
+```
+
+```sql
 -- name: mrr_composition
 SELECT month, 'New MRR' as component, SUM(new_mrr) as amount FROM revenue GROUP BY month
 UNION ALL
@@ -97,7 +107,7 @@ ORDER BY total DESC
 
 <Group title="MRR Trends">
 <Grid cols={2}>
-<LineChart data="mrr_composition" x="month" xFmt="month" y="net_mrr" title="Net MRR Over Time" yFmt="usd0" smooth />
+<LineChart data="mrr_net_trend" x="month" xFmt="month" y="net_mrr" title="Net MRR Over Time" yFmt="usd0" smooth />
 <BarChart data="mrr_by_plan" x="month" xFmt="month" y="net_mrr" series="plan" stacked title="MRR by Plan" yFmt="usd0" />
 </Grid>
 </Group>

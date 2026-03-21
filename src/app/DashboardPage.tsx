@@ -6,7 +6,7 @@ import { QueryProvider, type QueryResult } from "@/components/QueryContext";
 import { FilterProvider } from "@/components/inputs/FilterContext";
 import { useHotReload } from "./useHotReload";
 import { useQueryEngine } from "@/engine/EngineContext";
-import type { SQLQueryBlock } from "@/types/document";
+import type { SQLQueryBlock, QueryBlock, SemanticQueryBlockDoc } from "@/types/document";
 
 declare const __NSBI_STATIC__: boolean | undefined;
 
@@ -39,7 +39,7 @@ export function DashboardPage({ pagePath = "index", onTitleChange }: DashboardPa
 
   // Filter state
   const [filterValues, setFilterValues] = useState<Record<string, unknown>>({});
-  const parsedQueriesRef = useRef<SQLQueryBlock[]>([]);
+  const parsedQueriesRef = useRef<QueryBlock[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const filterInitializedRef = useRef(false);
   // HMR reload trigger
@@ -56,18 +56,53 @@ export function DashboardPage({ pagePath = "index", onTitleChange }: DashboardPa
     currentPage: pagePath,
     onPageChange: useCallback(() => setReloadKey((k) => k + 1), []),
     onDataChange: useCallback(() => setReloadKey((k) => k + 1), []),
+    disabled: isStatic,
   });
+
+  // Execute a semantic query via the dev server
+  const executeSemanticQuery = useCallback(
+    async (q: SemanticQueryBlockDoc) => {
+      const res = await fetch("/api/semantic-query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topicId: q.topic,
+          dimensions: q.dimensions,
+          measures: q.measures,
+          filters: q.filters,
+          timeGrain: q.timeGrain,
+          dateRange: q.dateRange,
+          orderBy: q.orderBy,
+          limit: q.limit,
+        }),
+      });
+      if (!res.ok) {
+        const errBody = (await res.json()) as { error: string };
+        throw new Error(errBody.error);
+      }
+      return (await res.json()) as { rows: Record<string, unknown>[]; columns: { name: string; type: string }[] };
+    },
+    [],
+  );
 
   // Execute queries with current filter values via the engine
   const executeQueries = useCallback(
-    async (queryBlocks: SQLQueryBlock[], filters: Record<string, unknown>) => {
+    async (queryBlocks: QueryBlock[], filters: Record<string, unknown>) => {
       const queryResults: QueryResultMap = {};
-      const queryPromises = queryBlocks.map(async (q: SQLQueryBlock) => {
+      const queryPromises = queryBlocks.map(async (q: QueryBlock) => {
         try {
-          const sql = q.filterVariables?.length
-            ? interpolateSQL(q.sql, filters)
-            : q.sql;
-          const data = await engine.executeQuery(sql);
+          let data: { rows: Record<string, unknown>[]; columns: { name: string; type: string }[] };
+
+          if (q.type === "semantic") {
+            data = await executeSemanticQuery(q as SemanticQueryBlockDoc);
+          } else {
+            const sqlBlock = q as SQLQueryBlock;
+            const sql = sqlBlock.filterVariables?.length
+              ? interpolateSQL(sqlBlock.sql, filters)
+              : sqlBlock.sql;
+            data = await engine.executeQuery(sql);
+          }
+
           queryResults[q.name] = {
             rows: data.rows,
             columns: data.columns,
@@ -87,7 +122,7 @@ export function DashboardPage({ pagePath = "index", onTitleChange }: DashboardPa
       await Promise.all(queryPromises);
       return queryResults;
     },
-    [engine],
+    [engine, executeSemanticQuery],
   );
 
   // Fetch page content — dev mode uses /api/page, static mode uses /_nsbi_data/{path}.json
@@ -127,8 +162,12 @@ export function DashboardPage({ pagePath = "index", onTitleChange }: DashboardPa
         parsedQueriesRef.current = parsed.queries;
 
         // 3. Execute queries
-        const staticQueries = parsed.queries.filter((q) => !q.filterVariables?.length);
-        const filteredQueries = parsed.queries.filter((q) => q.filterVariables?.length);
+        const staticQueries = parsed.queries.filter((q) =>
+          q.type === "semantic" || !(q as SQLQueryBlock).filterVariables?.length,
+        );
+        const filteredQueries = parsed.queries.filter((q) =>
+          q.type !== "semantic" && (q as SQLQueryBlock).filterVariables?.length,
+        );
 
         let queryResults: QueryResultMap;
 
@@ -182,11 +221,13 @@ export function DashboardPage({ pagePath = "index", onTitleChange }: DashboardPa
   useEffect(() => {
     if (status !== "ready") return;
     const queryBlocks = parsedQueriesRef.current;
-    const affectedQueries = queryBlocks.filter((q) => q.filterVariables?.length);
+    const affectedQueries = queryBlocks.filter((q) =>
+      q.type !== "semantic" && (q as SQLQueryBlock).filterVariables?.length,
+    );
     if (affectedQueries.length === 0) return;
 
     // Check all required filter variables have values
-    const allVars = new Set(affectedQueries.flatMap((q) => q.filterVariables ?? []));
+    const allVars = new Set(affectedQueries.flatMap((q) => (q as SQLQueryBlock).filterVariables ?? []));
     const allSet = [...allVars].every((v) => filterValues[v] !== undefined);
     if (!allSet) return; // wait for input defaults to initialize
 

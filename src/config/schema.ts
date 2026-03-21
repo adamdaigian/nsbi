@@ -10,6 +10,18 @@ export const nsbiConfigSchema = z.object({
       dir: z.string().default("data"),
     })
     .default({}),
+  models: z
+    .object({
+      dir: z.string().default("models"),
+    })
+    .default({}),
+  ai: z
+    .object({
+      provider: z.enum(["anthropic", "openai"]).default("anthropic"),
+      apiKey: z.string().optional(),
+      model: z.string().default("claude-sonnet-4-20250514"),
+    })
+    .default({}),
   build: z
     .object({
       outDir: z.string().default("dist"),

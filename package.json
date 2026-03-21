@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/components/index.ts",
+    "./components": "./src/components/index.ts",
+    "./semantic": "./src/semantic/types.ts",
+    "./semantic/compiler": "./src/semantic/compiler/index.ts",
+    "./bridge": "./extensions/northstar/adapter.ts",
+    "./export": "./extensions/northstar/export.ts"
+  },
   "scripts": {
     "dev": "tsx cli/index.ts dev --project ./demo",
     "typecheck": "tsc --noEmit"

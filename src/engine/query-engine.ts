@@ -1,3 +1,5 @@
+import type { SchemaMetadata } from "@/types/schema";
+
 /**
  * QueryEngine interface — abstracts where SQL queries execute.
  * Dev mode: server fetch. Production: DuckDB WASM in the browser.
@@ -9,6 +11,7 @@ export interface QueryResult {
 
 export interface QueryEngine {
   executeQuery(sql: string): Promise<QueryResult>;
+  getSchema?(): Promise<SchemaMetadata>;
   init?(): Promise<void>;
   close?(): Promise<void>;
 }
