@@ -4,6 +4,7 @@ export type { VegaChartProps } from './charts/VegaChart'
 export { northstarTheme, CHART_COLORS } from './charts/vega-theme'
 
 // Non-chart components (retained as-is)
+export { Sparkline } from './charts/Sparkline'
 export { BigValue } from './charts/BigValue'
 export { Delta } from './charts/Delta'
 export { DataTable } from './charts/DataTable'
