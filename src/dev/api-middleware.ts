@@ -179,15 +179,24 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
   router.get("/api/page", (req: Request, res: Response) => {
     try {
       const pagePath = (req.query.path as string) || "index";
-      const filePath = path.resolve(pagesDir, `${pagePath}.mdx`);
 
-      if (!fs.existsSync(filePath)) {
-        res.status(404).json({ error: `Page not found: ${pagePath}.mdx` });
+      // Try YAML first, then fall back to MDX
+      const yamlPath = path.resolve(pagesDir, `${pagePath}.yaml`);
+      const mdxPath = path.resolve(pagesDir, `${pagePath}.mdx`);
+
+      if (fs.existsSync(yamlPath)) {
+        const content = fs.readFileSync(yamlPath, "utf-8");
+        res.json({ content, format: "yaml" });
         return;
       }
 
-      const content = fs.readFileSync(filePath, "utf-8");
-      res.json({ content });
+      if (fs.existsSync(mdxPath)) {
+        const content = fs.readFileSync(mdxPath, "utf-8");
+        res.json({ content, format: "mdx" });
+        return;
+      }
+
+      res.status(404).json({ error: `Page not found: ${pagePath}` });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error("[nsbi] Page read error:", message);
@@ -324,13 +333,17 @@ function scanPages(dir: string, rootDir: string): PageNode[] {
           children,
         });
       }
-    } else if (entry.name.endsWith(".mdx")) {
+    } else if (entry.name.endsWith(".yaml") || entry.name.endsWith(".mdx")) {
+      const ext = path.extname(entry.name);
       const relativePath = path
         .relative(rootDir, fullPath)
-        .replace(/\.mdx$/, "")
+        .replace(new RegExp(`\\${ext}$`), "")
         .replace(/\\/g, "/");
-      const name = path.basename(entry.name, ".mdx");
-      nodes.push({ name, path: relativePath });
+      const name = path.basename(entry.name, ext);
+      // Skip if we already have this page (YAML takes priority over MDX)
+      if (!nodes.some((n) => n.path === relativePath)) {
+        nodes.push({ name, path: relativePath });
+      }
     }
   }
 

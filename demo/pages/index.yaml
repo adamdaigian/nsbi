@@ -1,0 +1,117 @@
+title: SaaS Overview
+description: Key business metrics across users, revenue, and support
+
+queries:
+  kpis:
+    sql: |
+      SELECT
+        (SELECT COUNT(*) FROM users) as total_users,
+        (SELECT COUNT(*) FROM users WHERE status = 'active') as active_users,
+        (SELECT ROUND(SUM(net_mrr), 0) FROM revenue) as total_net_mrr,
+        (SELECT COUNT(*) FROM support_tickets WHERE status != 'resolved') as open_tickets
+
+  signups_by_month:
+    sql: |
+      SELECT DATE_TRUNC('month', signup_date) as month, COUNT(*) as signups
+      FROM users GROUP BY month ORDER BY month
+
+  mrr_trend:
+    sql: |
+      SELECT month, SUM(net_mrr) as net_mrr, SUM(new_mrr) as new_mrr, SUM(churn_mrr) as churn_mrr
+      FROM revenue GROUP BY month ORDER BY month
+
+  mrr_components:
+    sql: |
+      SELECT month, 'New MRR' as component, SUM(new_mrr) as amount FROM revenue GROUP BY month
+      UNION ALL
+      SELECT month, 'Expansion MRR', SUM(expansion_mrr) FROM revenue GROUP BY month
+      UNION ALL
+      SELECT month, 'Churn MRR', -SUM(churn_mrr) FROM revenue GROUP BY month
+      ORDER BY month, component
+
+  users_by_plan:
+    sql: |
+      SELECT plan, COUNT(*) as users FROM users GROUP BY plan ORDER BY users DESC
+
+  users_by_source:
+    sql: |
+      SELECT source, COUNT(*) as users FROM users GROUP BY source ORDER BY users DESC
+
+  recent_tickets:
+    sql: |
+      SELECT DATE_TRUNC('month', created_at) as month, category, COUNT(*) as tickets
+      FROM support_tickets GROUP BY month, category ORDER BY month
+
+layout:
+  - row:
+    - big-value: { data: kpis, value: total_users, title: Total Users }
+    - big-value: { data: kpis, value: active_users, title: Active Users }
+    - big-value: { data: kpis, value: total_net_mrr, title: Net MRR }
+    - big-value: { data: kpis, value: open_tickets, title: Open Tickets }
+  - row:
+    - chart: signups
+    - chart: mrr
+  - row:
+    - chart: by_plan
+    - chart: by_source
+  - row:
+    - chart: mrr_comp
+  - row:
+    - chart: tickets
+
+charts:
+  signups:
+    data: signups_by_month
+    title: Monthly Signups
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: signups, type: quantitative }
+
+  mrr:
+    data: mrr_trend
+    title: Net MRR Trend
+    preset: line
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: net_mrr, type: quantitative }
+
+  by_plan:
+    data: users_by_plan
+    title: Users by Plan
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: plan, type: nominal }
+        y: { field: users, type: quantitative }
+
+  by_source:
+    data: users_by_source
+    title: Users by Source
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: source, type: nominal }
+        y: { field: users, type: quantitative }
+
+  mrr_comp:
+    data: mrr_components
+    title: New vs Expansion vs Churn MRR
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: amount, type: quantitative }
+        color: { field: component, type: nominal }
+
+  tickets:
+    data: recent_tickets
+    title: Tickets by Category
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: tickets, type: quantitative }
+        color: { field: category, type: nominal }
