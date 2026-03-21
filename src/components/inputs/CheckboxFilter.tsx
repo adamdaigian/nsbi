@@ -16,11 +16,11 @@ export function CheckboxFilter({ name, label }: CheckboxFilterProps) {
       <Checkbox
         checked={checked}
         onCheckedChange={(v) => onChange(v === true)}
-        className="h-4 w-4 rounded-sm border-[rgba(148,148,148,0.12)] transition-colors data-[state=checked]:border-[#5A7B8F] data-[state=checked]:bg-[#5A7B8F] data-[state=checked]:text-[#FFFFFF] hover:border-[rgba(148,148,148,0.24)] focus-visible:ring-1 focus-visible:ring-[#5A7B8F]/40"
+        className="h-4 w-4 rounded-sm border-border transition-colors data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-foreground hover:border-border2 focus-visible:ring-1 focus-visible:ring-primary/40"
       />
       {label && (
         <label
-          className="cursor-pointer select-none text-xs font-medium text-[#FFFFFF] transition-colors hover:text-[#949494]"
+          className="cursor-pointer select-none text-xs font-medium text-foreground transition-colors hover:text-muted-foreground"
           onClick={() => onChange(!checked)}
         >
           {label}

@@ -28,7 +28,7 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
         header: col.name,
         cell: (info) => {
           const val = info.getValue();
-          if (val == null) return <span className="text-[#666]">null</span>;
+          if (val == null) return <span className="text-muted-foreground">null</span>;
           if (typeof val === "object") return JSON.stringify(val);
           return String(val);
         },
@@ -49,7 +49,7 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-[12px] text-[#666]">
+      <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
         Running query...
       </div>
     );
@@ -57,7 +57,7 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
 
   if (error) {
     return (
-      <div className="p-3 text-[12px] text-[hsl(0,84%,60%)]">
+      <div className="p-3 text-[12px] text-destructive">
         {error}
       </div>
     );
@@ -65,7 +65,7 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
 
   if (rows.length === 0 && columns.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-[12px] text-[#666]">
+      <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
         Run a query to see results
       </div>
     );
@@ -82,7 +82,7 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
                   <th
                     key={header.id}
                     onClick={header.column.getToggleSortingHandler()}
-                    className="cursor-pointer select-none whitespace-nowrap border-b border-[rgba(148,148,148,0.12)] bg-[#0A0B0B] px-3 py-1.5 text-left text-[11px] font-medium text-[#949494] hover:text-[#FFFFFF] transition-colors"
+                    className="cursor-pointer select-none whitespace-nowrap border-b border-border bg-background px-3 py-1.5 text-left text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <span className="inline-flex items-center gap-1">
                       {flexRender(header.column.columnDef.header, header.getContext())}
@@ -100,10 +100,10 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className="border-b border-[rgba(148,148,148,0.04)] hover:bg-[rgba(64,64,64,0.1)]"
+                className="border-b border-border/50 hover:bg-muted/60"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="whitespace-nowrap px-3 py-1 text-[#FFFFFF]">
+                  <td key={cell.id} className="whitespace-nowrap px-3 py-1 text-foreground">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -112,14 +112,14 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between px-3 py-1.5 border-t border-[rgba(148,148,148,0.08)] text-[11px] text-[#666] shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 border-t border-border/70 text-[11px] text-muted-foreground shrink-0">
         <span>{rows.length} row{rows.length !== 1 ? "s" : ""}</span>
         {table.getPageCount() > 1 && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="text-[#949494] hover:text-[#FFFFFF] disabled:opacity-40"
+              className="text-muted-foreground hover:text-foreground disabled:opacity-40"
             >
               Prev
             </button>
@@ -129,7 +129,7 @@ export function ResultsTable({ rows, columns, loading, error }: ResultsTableProp
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="text-[#949494] hover:text-[#FFFFFF] disabled:opacity-40"
+              className="text-muted-foreground hover:text-foreground disabled:opacity-40"
             >
               Next
             </button>

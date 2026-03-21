@@ -16,10 +16,10 @@ export function Delta({ value, format, isUpGood = true }: DeltaProps) {
   const isGood = isNeutral ? null : isPositive === isUpGood;
 
   const color = isNeutral
-    ? "#949494"
+    ? "var(--muted-foreground)"
     : isGood
-      ? "hsl(142,71%,45%)"
-      : "hsl(0,84%,60%)";
+      ? "var(--green)"
+      : "var(--red)";
 
   const arrow = isPositive ? "\u2191" : isNeutral ? "\u2192" : "\u2193";
 

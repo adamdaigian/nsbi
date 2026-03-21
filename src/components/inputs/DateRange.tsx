@@ -52,33 +52,33 @@ export function DateRange({ name, label }: DateRangeProps) {
   return (
     <div className="flex flex-col gap-[4px]">
       {label && (
-        <label className="text-xs font-medium text-[#949494]">{label}</label>
+        <label className="text-xs font-medium text-muted-foreground">{label}</label>
       )}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "h-8 min-w-[200px] justify-start rounded-md border border-[rgba(148,148,148,0.12)] bg-[rgba(64,64,64,0.15)] px-[12px] py-[4px] text-left text-xs font-normal text-[#FFFFFF] transition-colors hover:border-[rgba(148,148,148,0.24)] hover:bg-[rgba(64,64,64,0.25)] focus:border-[#5A7B8F] focus:ring-1 focus:ring-[#5A7B8F]/40",
-              !range && "text-[#949494]",
+              "h-8 min-w-[200px] justify-start rounded-md border border-border bg-accent px-[12px] py-[4px] text-left text-xs font-normal text-foreground transition-colors hover:border-border2 hover:bg-accent/80 focus:border-primary focus:ring-1 focus:ring-primary/40",
+              !range && "text-muted-foreground",
             )}
           >
-            <CalendarIcon className="mr-[8px] h-3.5 w-3.5 text-[#949494]" />
+            <CalendarIcon className="mr-[8px] h-3.5 w-3.5 text-muted-foreground" />
             {displayText}
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto rounded-md border border-[rgba(148,148,148,0.12)] bg-[#0A0B0B] p-0 shadow-lg"
+          className="w-auto rounded-md border border-border bg-background p-0 shadow-lg"
           align="start"
         >
           <div className="flex">
             {/* Preset sidebar */}
-            <div className="flex flex-col border-r border-[rgba(148,148,148,0.12)] p-[8px]">
+            <div className="flex flex-col border-r border-border p-[8px]">
               {presets.map((preset) => (
                 <button
                   key={preset.label}
                   onClick={() => handlePreset(preset)}
-                  className="rounded px-[12px] py-[4px] text-left text-xs text-[#FFFFFF] transition-colors hover:bg-[rgba(64,64,64,0.15)]"
+                  className="rounded px-[12px] py-[4px] text-left text-xs text-foreground transition-colors hover:bg-accent"
                 >
                   {preset.label}
                 </button>
@@ -86,8 +86,8 @@ export function DateRange({ name, label }: DateRangeProps) {
               <button
                 onClick={() => setMode("custom")}
                 className={cn(
-                  "rounded px-[12px] py-[4px] text-left text-xs transition-colors hover:bg-[rgba(64,64,64,0.15)]",
-                  mode === "custom" ? "text-[#5A7B8F]" : "text-[#FFFFFF]",
+                  "rounded px-[12px] py-[4px] text-left text-xs transition-colors hover:bg-accent",
+                  mode === "custom" ? "text-primary" : "text-foreground",
                 )}
               >
                 Custom
@@ -110,7 +110,7 @@ export function DateRange({ name, label }: DateRangeProps) {
                     )
                   }
                   numberOfMonths={2}
-                  className="text-[#FFFFFF]"
+                  className="text-foreground"
                 />
               </div>
             )}

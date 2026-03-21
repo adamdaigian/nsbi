@@ -1,36 +1,36 @@
 import type { Config } from 'vega-lite'
 
 export const CHART_COLORS = [
-  '#5A7B8F',
-  '#8B7BA8',
-  '#2C4A5A',
-  '#949494',
-  '#6B8E9F',
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
 ]
 
 export const northstarTheme: Config = {
-  background: '#0A0B0B',
+  background: 'transparent',
   font: 'var(--font-geist-sans), system-ui, sans-serif',
 
   title: {
-    color: '#FFFFFF',
+    color: 'var(--foreground)',
     fontSize: 14,
     fontWeight: 600,
   },
 
   axis: {
-    labelColor: '#FFFFFF',
-    titleColor: '#FFFFFF',
-    gridColor: '#949494',
-    tickColor: '#949494',
-    domainColor: 'rgba(148,148,148,0.12)',
+    labelColor: 'var(--muted-foreground)',
+    titleColor: 'var(--foreground)',
+    gridColor: 'var(--border)',
+    tickColor: 'var(--border)',
+    domainColor: 'var(--border)',
     labelFontSize: 11,
     titleFontSize: 12,
   },
 
   legend: {
-    labelColor: '#FFFFFF',
-    titleColor: '#FFFFFF',
+    labelColor: 'var(--muted-foreground)',
+    titleColor: 'var(--foreground)',
     labelFontSize: 11,
   },
 

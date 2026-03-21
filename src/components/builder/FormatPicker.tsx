@@ -21,11 +21,11 @@ interface FormatPickerProps {
 export function FormatPicker({ label, value, onChange }: FormatPickerProps) {
   return (
     <div className="flex items-center gap-2">
-      {label && <label className="text-[11px] text-[#949494] w-14 shrink-0">{label}</label>}
+      {label && <label className="text-[11px] text-muted-foreground w-14 shrink-0">{label}</label>}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 bg-[rgba(64,64,64,0.15)] rounded px-2 py-1 text-[12px] text-[#FFFFFF] outline-none focus:ring-1 focus:ring-[#5A7B8F]"
+        className="flex-1 bg-accent rounded px-2 py-1 text-[12px] text-foreground outline-none focus:ring-1 focus:ring-primary"
       >
         {FORMAT_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>

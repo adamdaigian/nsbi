@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dusk">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,9 +7,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Apply saved theme before first paint to prevent flash
+      (function() {
+        var t = localStorage.getItem('nsbi-theme');
+        if (t && ['daylight','dusk','midnight'].includes(t)) {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

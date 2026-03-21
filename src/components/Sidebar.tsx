@@ -56,7 +56,7 @@ export function Sidebar({ currentPage, onNavigate, mobileOpen, onMobileClose }: 
         <div key={node.path}>
           <button
             onClick={() => toggleCollapse(node.path)}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-[#949494] hover:bg-[rgba(64,64,64,0.15)] hover:text-[#FFFFFF]"
+            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
             style={{ paddingLeft: `${12 + depth * 12}px` }}
           >
             <svg
@@ -87,8 +87,8 @@ export function Sidebar({ currentPage, onNavigate, mobileOpen, onMobileClose }: 
         className={cn(
           "flex w-full items-center rounded-md px-3 py-1.5 text-left text-xs transition-colors",
           isActive
-            ? "bg-[#5A7B8F]/15 font-medium text-[#5A7B8F]"
-            : "text-[#949494] hover:bg-[rgba(64,64,64,0.15)] hover:text-[#FFFFFF]",
+            ? "bg-primary/15 font-medium text-primary"
+            : "text-muted-foreground hover:bg-accent hover:text-foreground",
         )}
         style={{ paddingLeft: `${12 + depth * 12}px` }}
       >
@@ -115,13 +115,13 @@ export function Sidebar({ currentPage, onNavigate, mobileOpen, onMobileClose }: 
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-[rgba(148,148,148,0.12)] bg-[#0A0B0B] transition-transform lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-border bg-background transition-transform lg:static lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Logo / Brand */}
-        <div className="flex h-14 items-center border-b border-[rgba(148,148,148,0.12)] px-4">
-          <span className="text-sm font-semibold text-[#FFFFFF] tracking-tight">nsbi</span>
+        <div className="flex h-14 items-center border-b border-border px-4">
+          <span className="text-sm font-semibold text-foreground tracking-tight">nsbi</span>
         </div>
 
         {/* Navigation */}

@@ -18,8 +18,8 @@ export function AIChatMessage({ role, content }: AIChatMessageProps) {
       <div
         className={`max-w-[85%] rounded-lg px-3 py-2 text-[13px] leading-[1.5] ${
           role === "user"
-            ? "bg-[rgba(90,123,143,0.15)] text-[#FFFFFF]"
-            : "bg-[rgba(64,64,64,0.15)] text-[#FFFFFF]"
+            ? "bg-primary/15 text-foreground"
+            : "bg-accent text-foreground"
         }`}
       >
         {textContent && (
@@ -27,10 +27,10 @@ export function AIChatMessage({ role, content }: AIChatMessageProps) {
         )}
         {mdxCode && (
           <div className="mt-2">
-            <div className="flex items-center justify-between px-2 py-1 rounded-t bg-[rgba(64,64,64,0.3)] text-[10px] text-[#949494]">
+            <div className="flex items-center justify-between px-2 py-1 rounded-t bg-muted/30 text-[10px] text-muted-foreground">
               <span>MDX</span>
             </div>
-            <pre className="overflow-x-auto rounded-b bg-[rgba(0,0,0,0.3)] p-2 text-[11px] text-[#949494] font-mono">
+            <pre className="overflow-x-auto rounded-b bg-background/30 p-2 text-[11px] text-muted-foreground font-mono">
               <code>{mdxCode}</code>
             </pre>
           </div>

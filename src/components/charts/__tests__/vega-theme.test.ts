@@ -2,26 +2,26 @@ import { describe, it, expect } from 'vitest'
 import { northstarTheme, CHART_COLORS } from '../vega-theme'
 
 describe('northstarTheme', () => {
-  it('sets Neural Black background', () => {
-    expect(northstarTheme.background).toBe('#0A0B0B')
+  it('uses transparent background for theme compatibility', () => {
+    expect(northstarTheme.background).toBe('transparent')
   })
 
-  it('sets Optic White for text elements', () => {
-    expect(northstarTheme.title?.color).toBe('#FFFFFF')
-    expect(northstarTheme.axis?.labelColor).toBe('#FFFFFF')
-    expect(northstarTheme.legend?.labelColor).toBe('#FFFFFF')
+  it('uses CSS custom properties for text elements', () => {
+    expect(northstarTheme.title?.color).toBe('var(--foreground)')
+    expect(northstarTheme.axis?.labelColor).toBe('var(--muted-foreground)')
+    expect(northstarTheme.legend?.labelColor).toBe('var(--muted-foreground)')
   })
 
-  it('sets Cyber Silber for grid and ticks', () => {
-    expect(northstarTheme.axis?.gridColor).toBe('#949494')
-    expect(northstarTheme.axis?.tickColor).toBe('#949494')
+  it('uses CSS custom properties for grid and ticks', () => {
+    expect(northstarTheme.axis?.gridColor).toBe('var(--border)')
+    expect(northstarTheme.axis?.tickColor).toBe('var(--border)')
   })
 
-  it('sets border color for axis domain', () => {
-    expect(northstarTheme.axis?.domainColor).toBe('rgba(148,148,148,0.12)')
+  it('uses CSS custom property for axis domain', () => {
+    expect(northstarTheme.axis?.domainColor).toBe('var(--border)')
   })
 
-  it('exports a 5-color category palette', () => {
+  it('exports a 5-color category palette using CSS vars', () => {
     expect(CHART_COLORS).toHaveLength(5)
     expect(northstarTheme.range?.category).toEqual(CHART_COLORS)
   })

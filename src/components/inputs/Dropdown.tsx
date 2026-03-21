@@ -29,20 +29,20 @@ export function Dropdown({ name, label, options, defaultValue }: DropdownProps) 
   return (
     <div className="flex flex-col gap-[4px]">
       {label && (
-        <label className="text-xs font-medium text-[#949494]">{label}</label>
+        <label className="text-xs font-medium text-muted-foreground">{label}</label>
       )}
       <Select value={current} onValueChange={(v) => onChange(v)}>
         <SelectTrigger
-          className="h-8 min-w-[120px] rounded-md border border-[rgba(148,148,148,0.12)] bg-[rgba(64,64,64,0.15)] px-[12px] py-[4px] text-xs text-[#FFFFFF] transition-colors hover:border-[rgba(148,148,148,0.24)] focus:border-[#5A7B8F] focus:ring-1 focus:ring-[#5A7B8F]/40"
+          className="h-8 min-w-[120px] rounded-md border border-border bg-accent px-[12px] py-[4px] text-xs text-foreground transition-colors hover:border-border2 focus:border-primary focus:ring-1 focus:ring-primary/40"
         >
           <SelectValue placeholder="Select..." />
         </SelectTrigger>
-        <SelectContent className="rounded-md border border-[rgba(148,148,148,0.12)] bg-[#0A0B0B] shadow-lg">
+        <SelectContent className="rounded-md border border-border bg-background shadow-lg">
           {options.map((opt) => (
             <SelectItem
               key={opt.value}
               value={opt.value}
-              className="cursor-pointer text-xs text-[#FFFFFF] focus:bg-[rgba(64,64,64,0.15)] focus:text-[#FFFFFF]"
+              className="cursor-pointer text-xs text-foreground focus:bg-accent focus:text-foreground"
             >
               {opt.label}
             </SelectItem>

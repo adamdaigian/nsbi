@@ -9,6 +9,7 @@ import { SchemaProvider } from "@/components/schema/SchemaContext";
 import { SchemaExplorer } from "@/components/schema/SchemaExplorer";
 import { AIChatPanel } from "@/components/ai/AIChatPanel";
 import { ChartBuilder } from "@/components/builder/ChartBuilder";
+import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 
 declare const __NSBI_STATIC__: boolean | undefined;
 declare const __NSBI_HAS_WASM__: boolean | undefined;
@@ -63,7 +64,7 @@ export function App() {
 
   return (
     <EngineProvider engine={engine}>
-      <div className="flex min-h-screen bg-[#0A0B0B] text-[#FFFFFF]">
+      <div className="flex min-h-screen bg-background text-foreground">
         {/* Sidebar */}
         <Sidebar
           currentPage={currentPage}
@@ -78,7 +79,7 @@ export function App() {
           <div className="flex items-center gap-3 px-6 py-4 lg:hidden">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="rounded-md p-1.5 text-[#949494] hover:bg-[rgba(64,64,64,0.15)] hover:text-[#FFFFFF]"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Open navigation"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -90,9 +91,11 @@ export function App() {
           {/* Desktop toolbar */}
           {!isStatic && (
             <div className="hidden lg:flex items-center gap-1 px-6 pt-4 justify-end">
+              <ThemeSwitcher />
+              <div className="flex-1" />
               <button
                 onClick={() => setSchemaOpen(!schemaOpen)}
-                className={`rounded-md p-1.5 transition-colors ${schemaOpen ? "bg-[rgba(90,123,143,0.15)] text-[#5A7B8F]" : "text-[#949494] hover:bg-[rgba(64,64,64,0.15)] hover:text-[#FFFFFF]"}`}
+                className={`rounded-md p-1.5 transition-colors ${schemaOpen ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
                 aria-label="Toggle schema explorer"
                 title="Schema Explorer"
               >
@@ -102,7 +105,7 @@ export function App() {
               </button>
               <button
                 onClick={() => setAIChatOpen(!aiChatOpen)}
-                className={`rounded-md p-1.5 transition-colors ${aiChatOpen ? "bg-[rgba(90,123,143,0.15)] text-[#5A7B8F]" : "text-[#949494] hover:bg-[rgba(64,64,64,0.15)] hover:text-[#FFFFFF]"}`}
+                className={`rounded-md p-1.5 transition-colors ${aiChatOpen ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
                 aria-label="Toggle AI assistant"
                 title="AI Assistant"
               >
@@ -110,10 +113,10 @@ export function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                 </svg>
               </button>
-              <div className="w-px h-4 bg-[rgba(148,148,148,0.12)] mx-1" />
+              <div className="w-px h-4 bg-border mx-1" />
               <button
                 onClick={() => setBuilderMode(!builderMode)}
-                className={`rounded-md px-2 py-1 text-[11px] transition-colors ${builderMode ? "bg-[rgba(90,123,143,0.15)] text-[#5A7B8F]" : "text-[#949494] hover:bg-[rgba(64,64,64,0.15)] hover:text-[#FFFFFF]"}`}
+                className={`rounded-md px-2 py-1 text-[11px] transition-colors ${builderMode ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
                 title="Visual Builder"
               >
                 Builder
@@ -134,7 +137,7 @@ export function App() {
             {/* Schema Explorer Drawer */}
             {!isStatic && schemaOpen && (
               <SchemaProvider>
-                <div className="hidden lg:block w-[280px] shrink-0 border-l border-[rgba(148,148,148,0.12)] h-[calc(100vh-64px)] sticky top-0 overflow-hidden">
+                <div className="hidden lg:block w-[280px] shrink-0 border-l border-border h-[calc(100vh-64px)] sticky top-0 overflow-hidden">
                   <SchemaExplorer />
                 </div>
               </SchemaProvider>
@@ -142,7 +145,7 @@ export function App() {
 
             {/* AI Chat Drawer */}
             {!isStatic && aiChatOpen && (
-              <div className="hidden lg:block w-[340px] shrink-0 border-l border-[rgba(148,148,148,0.12)] h-[calc(100vh-64px)] sticky top-0 overflow-hidden">
+              <div className="hidden lg:block w-[340px] shrink-0 border-l border-border h-[calc(100vh-64px)] sticky top-0 overflow-hidden">
                 <AIChatPanel />
               </div>
             )}

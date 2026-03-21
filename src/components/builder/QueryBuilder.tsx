@@ -17,10 +17,10 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
     return (
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-[#949494]">SQL Query</span>
+          <span className="text-[11px] text-muted-foreground">SQL Query</span>
           <button
             onClick={() => setSqlMode(false)}
-            className="text-[10px] text-[#5A7B8F] hover:text-[#FFFFFF]"
+            className="text-[10px] text-primary hover:text-foreground"
           >
             Switch to builder
           </button>
@@ -30,14 +30,14 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
           value={query.name}
           onChange={(e) => onChange({ ...query, name: e.target.value })}
           placeholder="Query name"
-          className="bg-[rgba(64,64,64,0.15)] rounded px-2 py-1 text-[12px] text-[#FFFFFF] placeholder:text-[#666] outline-none focus:ring-1 focus:ring-[#5A7B8F]"
+          className="bg-accent rounded px-2 py-1 text-[12px] text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
         />
         <textarea
           value={query.sql ?? ""}
           onChange={(e) => onChange({ ...query, type: "sql", sql: e.target.value })}
           placeholder="SELECT ..."
           rows={6}
-          className="bg-[rgba(64,64,64,0.15)] rounded px-2 py-1.5 text-[12px] text-[#FFFFFF] placeholder:text-[#666] outline-none focus:ring-1 focus:ring-[#5A7B8F] font-mono resize-y"
+          className="bg-accent rounded px-2 py-1.5 text-[12px] text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary font-mono resize-y"
         />
       </div>
     );
@@ -67,14 +67,14 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-[#949494]">Query Builder</span>
+        <span className="text-[11px] text-muted-foreground">Query Builder</span>
         <button
           onClick={() => {
             const sql = generateSQL();
             if (sql) onChange({ ...query, type: "sql", sql });
             setSqlMode(true);
           }}
-          className="text-[10px] text-[#5A7B8F] hover:text-[#FFFFFF]"
+          className="text-[10px] text-primary hover:text-foreground"
         >
           Switch to SQL
         </button>
@@ -84,7 +84,7 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
         value={query.name}
         onChange={(e) => onChange({ ...query, name: e.target.value })}
         placeholder="Query name"
-        className="bg-[rgba(64,64,64,0.15)] rounded px-2 py-1 text-[12px] text-[#FFFFFF] placeholder:text-[#666] outline-none focus:ring-1 focus:ring-[#5A7B8F]"
+        className="bg-accent rounded px-2 py-1 text-[12px] text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
       />
       <select
         value={selectedTable}
@@ -92,7 +92,7 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
           setSelectedTable(e.target.value);
           setSelectedColumns([]);
         }}
-        className="bg-[rgba(64,64,64,0.15)] rounded px-2 py-1 text-[12px] text-[#FFFFFF] outline-none focus:ring-1 focus:ring-[#5A7B8F]"
+        className="bg-accent rounded px-2 py-1 text-[12px] text-foreground outline-none focus:ring-1 focus:ring-primary"
       >
         <option value="">Select table...</option>
         {tables.map((t) => (
@@ -102,10 +102,10 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
 
       {tableSchema && (
         <>
-          <div className="text-[11px] text-[#949494]">Columns</div>
+          <div className="text-[11px] text-muted-foreground">Columns</div>
           <div className="max-h-[120px] overflow-y-auto space-y-0.5">
             {tableSchema.columns.map((col) => (
-              <label key={col.name} className="flex items-center gap-1.5 text-[11px] text-[#FFFFFF] cursor-pointer hover:bg-[rgba(64,64,64,0.1)] rounded px-1">
+              <label key={col.name} className="flex items-center gap-1.5 text-[11px] text-foreground cursor-pointer hover:bg-muted/60 rounded px-1">
                 <input
                   type="checkbox"
                   checked={selectedColumns.includes(col.name)}
@@ -116,10 +116,10 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
                         : selectedColumns.filter((c) => c !== col.name),
                     );
                   }}
-                  className="rounded border-[#666]"
+                  className="rounded border-muted-foreground"
                 />
                 <span>{col.name}</span>
-                <span className="text-[10px] text-[#666] ml-auto">{col.type}</span>
+                <span className="text-[10px] text-muted-foreground ml-auto">{col.type}</span>
               </label>
             ))}
           </div>
@@ -128,7 +128,7 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
             <select
               value={aggregation}
               onChange={(e) => setAggregation(e.target.value)}
-              className="flex-1 bg-[rgba(64,64,64,0.15)] rounded px-2 py-1 text-[11px] text-[#FFFFFF] outline-none"
+              className="flex-1 bg-accent rounded px-2 py-1 text-[11px] text-foreground outline-none"
             >
               <option value="none">No aggregation</option>
               <option value="SUM">SUM</option>
@@ -140,7 +140,7 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value)}
-              className="flex-1 bg-[rgba(64,64,64,0.15)] rounded px-2 py-1 text-[11px] text-[#FFFFFF] outline-none"
+              className="flex-1 bg-accent rounded px-2 py-1 text-[11px] text-foreground outline-none"
             >
               <option value="">Group by...</option>
               {selectedColumns.map((col) => (
@@ -155,7 +155,7 @@ export function QueryBuilder({ query, schema, onChange }: QueryBuilderProps) {
               if (sql) onChange({ ...query, type: "sql", sql });
             }}
             disabled={!selectedTable || selectedColumns.length === 0}
-            className="text-[11px] px-2 py-1 rounded bg-[rgba(90,123,143,0.15)] text-[#5A7B8F] hover:bg-[rgba(90,123,143,0.25)] disabled:opacity-50 transition-colors"
+            className="text-[11px] px-2 py-1 rounded bg-primary/15 text-primary hover:bg-primary/25 disabled:opacity-50 transition-colors"
           >
             Generate SQL
           </button>

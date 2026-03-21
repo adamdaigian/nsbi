@@ -27,7 +27,7 @@ export function CodeEditor({ value, onChange, language = "mdx" }: CodeEditorProp
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-3 py-1.5 border-b border-[rgba(148,148,148,0.08)] text-[10px] text-[#666]">
+      <div className="px-3 py-1.5 border-b border-border/70 text-[10px] text-muted-foreground">
         {language.toUpperCase()}
       </div>
       <textarea
@@ -35,7 +35,7 @@ export function CodeEditor({ value, onChange, language = "mdx" }: CodeEditorProp
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="flex-1 w-full bg-transparent p-3 text-[12px] text-[#FFFFFF] font-mono leading-[1.6] outline-none resize-none"
+        className="flex-1 w-full bg-transparent p-3 text-[12px] text-foreground font-mono leading-[1.6] outline-none resize-none"
         spellCheck={false}
       />
     </div>

@@ -31,3 +31,4 @@ Thumbs.db
 npm-debug.log*
 
 .gstack/
+.superpowers/

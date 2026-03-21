@@ -20,12 +20,12 @@ export function SchemaExplorer() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[rgba(148,148,148,0.12)]">
-        <span className="text-[13px] font-semibold text-[#FFFFFF]">Schema</span>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+        <span className="text-[13px] font-semibold text-foreground">Schema</span>
         <button
           onClick={refresh}
           disabled={loading}
-          className="p-1 rounded text-[#949494] hover:text-[#FFFFFF] hover:bg-[rgba(64,64,64,0.15)] disabled:opacity-50 transition-colors"
+          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
           title="Refresh schema"
         >
           <svg
@@ -41,13 +41,13 @@ export function SchemaExplorer() {
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2 border-b border-[rgba(148,148,148,0.08)]">
+      <div className="px-3 py-2 border-b border-border/70">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tables & columns..."
-          className="w-full bg-[rgba(64,64,64,0.15)] rounded px-2 py-1 text-[12px] text-[#FFFFFF] placeholder:text-[#666] outline-none focus:ring-1 focus:ring-[#5A7B8F]"
+          className="w-full bg-accent rounded px-2 py-1 text-[12px] text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -57,17 +57,17 @@ export function SchemaExplorer() {
           <div className="flex items-center justify-center py-8">
             <div
               className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"
-              style={{ borderColor: "#5A7B8F", borderTopColor: "transparent" }}
+              style={{ borderColor: "var(--primary)", borderTopColor: "transparent" }}
             />
           </div>
         )}
 
         {error && (
-          <div className="px-3 py-3 text-[12px] text-[hsl(0,84%,60%)]">{error}</div>
+          <div className="px-3 py-3 text-[12px] text-destructive">{error}</div>
         )}
 
         {schema && filteredTables.length === 0 && (
-          <div className="px-3 py-4 text-[12px] text-[#666] text-center">
+          <div className="px-3 py-4 text-[12px] text-muted-foreground text-center">
             {search ? "No matching tables" : "No tables found"}
           </div>
         )}
@@ -79,7 +79,7 @@ export function SchemaExplorer() {
 
       {/* Footer */}
       {schema && (
-        <div className="px-3 py-1.5 border-t border-[rgba(148,148,148,0.08)] text-[10px] text-[#666]">
+        <div className="px-3 py-1.5 border-t border-border/70 text-[10px] text-muted-foreground">
           {schema.tables.length} table{schema.tables.length !== 1 ? "s" : ""}
         </div>
       )}

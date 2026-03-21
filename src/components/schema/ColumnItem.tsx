@@ -59,7 +59,7 @@ export function ColumnItem({ column }: ColumnItemProps) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-2 w-full px-3 py-1 text-left text-[12px] hover:bg-[rgba(64,64,64,0.15)] rounded transition-colors group"
+      className="flex items-center gap-2 w-full px-3 py-1 text-left text-[12px] hover:bg-accent rounded transition-colors group"
       title={`${column.type}${column.nullable ? " (nullable)" : ""} — click to copy`}
     >
       <span
@@ -67,11 +67,11 @@ export function ColumnItem({ column }: ColumnItemProps) {
       >
         {getShortType(column.type)}
       </span>
-      <span className="text-[#949494] truncate flex-1">{column.name}</span>
+      <span className="text-muted-foreground truncate flex-1">{column.name}</span>
       {column.nullable && (
-        <span className="text-[10px] text-[#666] shrink-0">?</span>
+        <span className="text-[10px] text-muted-foreground shrink-0">?</span>
       )}
-      <span className="text-[10px] text-[#5A7B8F] opacity-0 group-hover:opacity-100 shrink-0 transition-opacity">
+      <span className="text-[10px] text-primary opacity-0 group-hover:opacity-100 shrink-0 transition-opacity">
         {copied ? "copied!" : "copy"}
       </span>
     </button>

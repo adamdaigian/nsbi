@@ -1,55 +1,221 @@
 @import "tailwindcss";
 
 /*
- * NSBI — Northstar dark-only design tokens.
- * Extracted from Northstar's design system.
+ * NSBI — Northstar design tokens.
+ * Three themes: Dusk (default), Daylight, Midnight.
+ * Mapped to shadcn/ui token names.
  */
 
-:root {
-  /* Dark-only: Neural Black base */
-  --background: hsl(210 5% 4%);
-  --foreground: hsl(0 0% 100%);
+/* ── Dusk (default) — warm linen ── */
+:root,
+[data-theme="dusk"] {
+  --background: #F2F0EB;
+  --foreground: #1C1917;
 
-  --card: hsl(0 0% 25% / 0.2);
-  --card-foreground: hsl(0 0% 100%);
+  --card: #FFFFFF;
+  --card-foreground: #1C1917;
 
-  --popover: hsl(0 0% 25% / 0.25);
-  --popover-foreground: hsl(0 0% 100%);
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
 
-  --primary: hsl(200 42% 46%);
-  --primary-foreground: hsl(0 0% 100%);
+  --primary: #1C1917;
+  --primary-foreground: #F2F0EB;
 
-  --secondary: hsl(0 0% 25% / 0.3);
-  --secondary-foreground: hsl(0 0% 100%);
+  --secondary: #F8F7F3;
+  --secondary-foreground: #1C1917;
 
-  --muted: hsl(0 0% 25% / 0.15);
-  --muted-foreground: hsl(0 0% 58%);
+  --muted: #F8F7F3;
+  --muted-foreground: #6B6560;
 
-  --accent: hsl(200 42% 46%);
-  --accent-foreground: hsl(0 0% 100%);
+  --accent: #E8E6DF;
+  --accent-foreground: #1C1917;
 
-  --destructive: hsl(0 84% 60%);
-  --destructive-foreground: hsl(0 0% 100%);
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
 
-  --border: hsl(0 0% 58% / 0.12);
-  --input: hsl(0 0% 58% / 0.15);
-  --ring: hsl(0 0% 58%);
+  --border: #E4E1D9;
+  --input: #E4E1D9;
+  --ring: #D6D3CA;
 
-  --chart-1: hsl(200 42% 46%);
-  --chart-2: hsl(263 18% 58%);
-  --chart-3: hsl(195 33% 24%);
-  --chart-4: hsl(0 0% 58%);
-  --chart-5: hsl(210 5% 4%);
+  /* Northstar extended tokens */
+  --sidebar: #ECEAE4;
+  --surface2: #F8F7F3;
+  --ink2: #6B6560;
+  --ink3: #A39D97;
+  --ink4: #C5BFB9;
+  --nav-active: #E2E0D8;
+  --nav-hover: #E8E6DF;
+  --border2: #D6D3CA;
 
-  --radius: 0.375rem;
+  /* Semantic accent colors */
+  --green: #16A34A;
+  --green-bg: #F0FDF4;
+  --green-border: #BBF7D0;
+  --amber: #D97706;
+  --amber-bg: #FFFBEB;
+  --amber-border: #FDE68A;
+  --red: #DC2626;
+  --red-bg: #FEF2F2;
+  --red-border: #FECACA;
+  --blue: #2563EB;
+  --blue-bg: #EFF6FF;
+  --blue-border: #BFDBFE;
+  --purple: #7C3AED;
+  --purple-bg: #F5F3FF;
+  --purple-border: #DDD6FE;
+  --teal: #0D9488;
+  --teal-bg: #F0FDFA;
+  --teal-border: #99F6E4;
 
+  /* Chart palette */
+  --chart-1: #2563EB;
+  --chart-2: #7C3AED;
+  --chart-3: #0D9488;
+  --chart-4: #D97706;
+  --chart-5: #DC2626;
+
+  /* Border radius */
+  --radius: 8px;
+
+  /* Font families */
   --font-geist-sans: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, monospace;
+}
+
+/* ── Daylight — clean white ── */
+[data-theme="daylight"] {
+  --background: #FFFFFF;
+  --foreground: #1C1917;
+
+  --card: #FFFFFF;
+  --card-foreground: #1C1917;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
+
+  --primary: #1C1917;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #F7F6F4;
+  --secondary-foreground: #1C1917;
+
+  --muted: #F7F6F4;
+  --muted-foreground: #5C5753;
+
+  --accent: #F1F0ED;
+  --accent-foreground: #1C1917;
+
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #E3E1DD;
+  --input: #E3E1DD;
+  --ring: #D4D2CD;
+
+  --sidebar: #F7F6F4;
+  --surface2: #F7F6F4;
+  --ink2: #5C5753;
+  --ink3: #9A9590;
+  --ink4: #BDB8B3;
+  --nav-active: #EBEAE7;
+  --nav-hover: #F1F0ED;
+  --border2: #D4D2CD;
+
+  --green: #16A34A;
+  --green-bg: #F0FDF4;
+  --green-border: #BBF7D0;
+  --amber: #D97706;
+  --amber-bg: #FFFBEB;
+  --amber-border: #FDE68A;
+  --red: #DC2626;
+  --red-bg: #FEF2F2;
+  --red-border: #FECACA;
+  --blue: #2563EB;
+  --blue-bg: #EFF6FF;
+  --blue-border: #BFDBFE;
+  --purple: #7C3AED;
+  --purple-bg: #F5F3FF;
+  --purple-border: #DDD6FE;
+  --teal: #0D9488;
+  --teal-bg: #F0FDFA;
+  --teal-border: #99F6E4;
+
+  --chart-1: #2563EB;
+  --chart-2: #7C3AED;
+  --chart-3: #0D9488;
+  --chart-4: #D97706;
+  --chart-5: #DC2626;
+}
+
+/* ── Midnight — deep navy-black ── */
+[data-theme="midnight"] {
+  --background: #0B0E14;
+  --foreground: #E8ECF1;
+
+  --card: #151A24;
+  --card-foreground: #E8ECF1;
+
+  --popover: #151A24;
+  --popover-foreground: #E8ECF1;
+
+  --primary: #E8ECF1;
+  --primary-foreground: #0B0E14;
+
+  --secondary: #1A2030;
+  --secondary-foreground: #E8ECF1;
+
+  --muted: #1A2030;
+  --muted-foreground: #9BA3B0;
+
+  --accent: #141824;
+  --accent-foreground: #E8ECF1;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #E8ECF1;
+
+  --border: #232A38;
+  --input: #232A38;
+  --ring: #2E3749;
+
+  --sidebar: #0F1219;
+  --surface2: #1A2030;
+  --ink2: #9BA3B0;
+  --ink3: #606A7A;
+  --ink4: #3D4656;
+  --nav-active: #1A1F2B;
+  --nav-hover: #141824;
+  --border2: #2E3749;
+
+  --green: #22C55E;
+  --green-bg: #0D2818;
+  --green-border: #1A4028;
+  --amber: #F59E0B;
+  --amber-bg: #291E0A;
+  --amber-border: #3D2E10;
+  --red: #EF4444;
+  --red-bg: #2A1010;
+  --red-border: #3D1818;
+  --blue: #3B82F6;
+  --blue-bg: #0D1A2E;
+  --blue-border: #1A2E4A;
+  --purple: #8B5CF6;
+  --purple-bg: #1A1028;
+  --purple-border: #2E1E48;
+  --teal: #14B8A6;
+  --teal-bg: #0A2622;
+  --teal-border: #143D36;
+
+  --chart-1: #3B82F6;
+  --chart-2: #8B5CF6;
+  --chart-3: #14B8A6;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
 }
 
 @theme inline {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: ui-monospace, monospace;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -74,10 +240,36 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
+  --color-sidebar: var(--sidebar);
+  --color-surface2: var(--surface2);
+  --color-ink2: var(--ink2);
+  --color-ink3: var(--ink3);
+  --color-ink4: var(--ink4);
+  --color-nav-active: var(--nav-active);
+  --color-nav-hover: var(--nav-hover);
+  --color-border2: var(--border2);
+  --color-green: var(--green);
+  --color-green-bg: var(--green-bg);
+  --color-green-border: var(--green-border);
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-amber-border: var(--amber-border);
+  --color-red: var(--red);
+  --color-red-bg: var(--red-bg);
+  --color-red-border: var(--red-border);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-blue-border: var(--blue-border);
+  --color-purple: var(--purple);
+  --color-purple-bg: var(--purple-bg);
+  --color-purple-border: var(--purple-border);
+  --color-teal: var(--teal);
+  --color-teal-bg: var(--teal-bg);
+  --color-teal-border: var(--teal-border);
+  --radius-sm: 5px;
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: 12px;
   --color-ring-offset: var(--background);
 }
 

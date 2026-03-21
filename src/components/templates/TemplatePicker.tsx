@@ -36,15 +36,15 @@ export function TemplatePicker({ onSelect, onClose }: TemplatePickerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-[600px] max-h-[500px] rounded-lg bg-[#0A0B0B] border border-[rgba(148,148,148,0.12)] shadow-2xl flex flex-col">
+      <div className="w-[600px] max-h-[500px] rounded-lg bg-background border border-border shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(148,148,148,0.12)]">
-          <h2 className="text-[14px] font-semibold text-[#FFFFFF]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <h2 className="text-[14px] font-semibold text-foreground">
             {step === "template" ? "New from Template" : `Select Table for "${selectedTemplate?.name}"`}
           </h2>
           <button
             onClick={onClose}
-            className="text-[#949494] hover:text-[#FFFFFF] transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -68,7 +68,7 @@ export function TemplatePicker({ onSelect, onClose }: TemplatePickerProps) {
 
           {step === "table" && (
             <div className="space-y-3">
-              <p className="text-[12px] text-[#949494]">
+              <p className="text-[12px] text-muted-foreground">
                 Choose a table to generate the dashboard from:
               </p>
               <div className="space-y-1">
@@ -78,12 +78,12 @@ export function TemplatePicker({ onSelect, onClose }: TemplatePickerProps) {
                     onClick={() => setSelectedTable(table.name)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded text-left text-[13px] transition-colors ${
                       selectedTable === table.name
-                        ? "bg-[rgba(90,123,143,0.15)] text-[#5A7B8F] ring-1 ring-[rgba(90,123,143,0.3)]"
-                        : "text-[#FFFFFF] hover:bg-[rgba(64,64,64,0.15)]"
+                        ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                        : "text-foreground hover:bg-accent"
                     }`}
                   >
                     <span>{table.name}</span>
-                    <span className="text-[11px] text-[#666]">
+                    <span className="text-[11px] text-muted-foreground">
                       {table.columns.length} cols, {table.rowCount.toLocaleString()} rows
                     </span>
                   </button>
@@ -95,17 +95,17 @@ export function TemplatePicker({ onSelect, onClose }: TemplatePickerProps) {
 
         {/* Footer */}
         {step === "table" && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[rgba(148,148,148,0.12)]">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
             <button
               onClick={() => setStep("template")}
-              className="text-[12px] text-[#949494] hover:text-[#FFFFFF]"
+              className="text-[12px] text-muted-foreground hover:text-foreground"
             >
               Back
             </button>
             <button
               onClick={handleGenerate}
               disabled={!selectedTable}
-              className="px-3 py-1.5 rounded text-[12px] bg-[rgba(90,123,143,0.15)] text-[#5A7B8F] hover:bg-[rgba(90,123,143,0.25)] disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 rounded text-[12px] bg-primary/15 text-primary hover:bg-primary/25 disabled:opacity-50 transition-colors"
             >
               Generate Dashboard
             </button>
