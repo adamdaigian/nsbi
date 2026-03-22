@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import { BuilderContext, useBuilderReducer, generateChartId } from "./BuilderStore";
 import { ChartTypeSelector, type ChartVariant } from "./ChartTypeSelector";
 import { AxisMapper } from "./AxisMapper";
@@ -6,38 +6,68 @@ import { FormatPicker } from "./FormatPicker";
 import { ResultsTable } from "./ResultsTable";
 import { SchemaProvider, useSchema } from "@/components/schema/SchemaContext";
 import { useQueryEngine } from "@/engine/EngineContext";
-// TODO: reconnect after YAML config parser
-// import { pageSpecToMDX } from "@/builder/codegen";
-import type { ChartSpec } from "@/builder/types";
-
-// TODO: reconnect after YAML config parser - chart preview will use VegaChart
-// Previously imported LineChart, AreaChart, BarChart, ScatterPlot, Sparkline from echarts components
-
+import { VegaChart } from "@/components/charts/VegaChart";
 import { DataTable } from "@/components/charts/DataTable";
 import { BigValue } from "@/components/charts/BigValue";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CHART_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  // TODO: reconnect after YAML config parser - use VegaChart presets
-  DataTable,
-  BigValue,
-};
+import { applyPreset } from "@/config/presets";
+import type { ChartSpec } from "@/builder/types";
 
 interface QueryResult {
   rows: Record<string, unknown>[];
   columns: { name: string; type: string }[];
 }
 
+/** Infer Vega-Lite type from column metadata */
+function inferVegaType(colName: string, columns: { name: string; type: string }[]): string {
+  const col = columns.find((c) => c.name === colName);
+  if (!col) return "nominal";
+  const t = col.type.toUpperCase();
+  if (/INT|FLOAT|DOUBLE|DECIMAL|NUMERIC|REAL|BIGINT|NUMBER/.test(t)) return "quantitative";
+  if (/DATE|TIME|TIMESTAMP/.test(t)) return "temporal";
+  return "nominal";
+}
+
+/** Build a Vega-Lite partial spec from axis mappings */
+function buildVegaSpec(
+  variant: ChartVariant,
+  xAxis: string,
+  yAxes: string[],
+  series: string,
+  columns: { name: string; type: string }[],
+): Record<string, unknown> {
+  const encoding: Record<string, unknown> = {};
+  if (xAxis) {
+    encoding.x = { field: xAxis, type: inferVegaType(xAxis, columns) };
+  }
+  const filledYs = yAxes.filter(Boolean);
+  if (filledYs[0]) {
+    encoding.y = { field: filledYs[0], type: inferVegaType(filledYs[0], columns) };
+  }
+  if (series) {
+    encoding.color = { field: series, type: inferVegaType(series, columns) };
+  }
+
+  // For pie charts, use theta instead of y
+  if (variant.type === "pie" && filledYs[0]) {
+    encoding.theta = encoding.y;
+    delete encoding.y;
+    delete encoding.x;
+  }
+
+  const partialSpec = { encoding };
+  return applyPreset(variant.type, partialSpec);
+}
+
 interface LiveChartPreviewProps {
   variant: ChartVariant | null;
   data: Record<string, unknown>[];
+  columns: { name: string; type: string }[];
   xAxis: string;
   yAxes: string[];
   series: string;
-  format: string;
 }
 
-function LiveChartPreview({ variant, data, xAxis, yAxes, series, format }: LiveChartPreviewProps) {
+function LiveChartPreview({ variant, data, columns, xAxis, yAxes, series }: LiveChartPreviewProps) {
   if (!variant) {
     return (
       <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
@@ -54,51 +84,26 @@ function LiveChartPreview({ variant, data, xAxis, yAxes, series, format }: LiveC
     );
   }
 
-  const ChartComponent = CHART_COMPONENTS[variant.type];
-  if (!ChartComponent) {
+  if (variant.type === "DataTable") {
+    return <DataTable data={data} height={350} />;
+  }
+
+  if (variant.type === "BigValue") {
+    const filledYs = yAxes.filter(Boolean);
+    return <BigValue data={data} value={filledYs[0] || ""} />;
+  }
+
+  // All other chart types render via VegaChart
+  if (!xAxis && variant.type !== "pie" && variant.type !== "histogram") {
     return (
       <div className="flex items-center justify-center h-full text-[12px] text-muted-foreground">
-        Chart preview being migrated to Vega-Lite
+        Map X and Y axes to see preview
       </div>
     );
   }
 
-  // Build props: start with implied props from variant, then add axis mappings
-  const filledYs = yAxes.filter(Boolean);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chartProps: Record<string, any> = { data, height: 350, ...variant.impliedProps };
-
-  if (variant.type === "BigValue") {
-    if (filledYs[0]) chartProps.value = filledYs[0];
-  } else if (variant.type === "DataTable") {
-    // DataTable just needs data
-  } else {
-    if (xAxis) chartProps.x = xAxis;
-    if (filledYs[0]) chartProps.y = filledYs[0];
-    if (filledYs[1]) chartProps.y2 = filledYs[1];
-    if (series) chartProps.series = series;
-    if (format) chartProps.yFmt = format;
-  }
-
-  return <ChartComponent {...chartProps} />;
-}
-
-/** Merge variant implied props + user axis config into a single props object */
-function buildChartProps(
-  variant: ChartVariant,
-  xAxis: string,
-  yAxes: string[],
-  series: string,
-  format: string,
-): Record<string, unknown> {
-  const props: Record<string, unknown> = { ...variant.impliedProps };
-  if (xAxis) props.x = xAxis;
-  const filledYs = yAxes.filter(Boolean);
-  if (filledYs[0]) props.y = filledYs[0];
-  if (filledYs[1]) props.y2 = filledYs[1];
-  if (series) props.series = series;
-  if (format) props.yFormat = format;
-  return props;
+  const spec = buildVegaSpec(variant, xAxis, yAxes, series, columns);
+  return <VegaChart spec={spec} data={{ table: data }} height={350} />;
 }
 
 function ChartBuilderInner() {
@@ -173,12 +178,14 @@ function ChartBuilderInner() {
       dispatch({ type: "ADD_QUERY", query: { name: queryName, type: "sql", sql } });
     }
     if (selectedVariant && queryName) {
-      const props = buildChartProps(selectedVariant, xAxis, yAxes, series, format);
+      const columns = queryResult?.columns ?? [];
+      const vegaSpec = buildVegaSpec(selectedVariant, xAxis, yAxes, series, columns);
       const chart: ChartSpec = {
         id: generateChartId(),
         type: selectedVariant.type as ChartSpec["type"],
         dataSource: queryName,
-        spec: props,
+        preset: selectedVariant.type,
+        spec: vegaSpec,
       };
       dispatch({ type: "ADD_CHART", chart });
     }
@@ -189,10 +196,58 @@ function ChartBuilderInner() {
     setYAxes([""]);
     setSeries("");
     setFormat("");
-  }, [dispatch, queryName, sql, selectedVariant, xAxis, yAxes, series, format, state.pageSpec.queries.length]);
+  }, [dispatch, queryName, sql, selectedVariant, xAxis, yAxes, series, format, state.pageSpec.queries.length, queryResult]);
 
-  // TODO: reconnect after YAML config parser
-  const mdxOutput = "// Code generation being migrated to YAML config";
+  // Generate YAML output from current page spec
+  const yamlOutput = useMemo(() => {
+    const ps = state.pageSpec;
+    if (ps.queries.length === 0 && ps.layout.length === 0) return "";
+
+    const lines: string[] = [];
+    if (ps.title) lines.push(`title: ${ps.title}`);
+    lines.push("");
+
+    if (ps.queries.length > 0) {
+      lines.push("queries:");
+      for (const q of ps.queries) {
+        lines.push(`  ${q.name}:`);
+        lines.push(`    sql: |`);
+        for (const sqlLine of (q.sql || "").split("\n")) {
+          lines.push(`      ${sqlLine}`);
+        }
+      }
+      lines.push("");
+    }
+
+    const charts = ps.layout.filter((item): item is ChartSpec => "id" in item);
+    if (charts.length > 0) {
+      lines.push("layout:");
+      lines.push("  - row:");
+      for (const chart of charts) {
+        lines.push(`    - chart: ${chart.id}`);
+      }
+      lines.push("");
+
+      lines.push("charts:");
+      for (const chart of charts) {
+        lines.push(`  ${chart.id}:`);
+        lines.push(`    data: ${chart.dataSource}`);
+        if (chart.title) lines.push(`    title: ${chart.title}`);
+        if (chart.preset) lines.push(`    preset: ${chart.preset}`);
+        if (chart.spec?.encoding) {
+          lines.push("    spec:");
+          lines.push("      encoding:");
+          const enc = chart.spec.encoding as Record<string, Record<string, unknown>>;
+          for (const [channel, def] of Object.entries(enc)) {
+            const parts = Object.entries(def).map(([k, v]) => `${k}: ${v}`).join(", ");
+            lines.push(`        ${channel}: { ${parts} }`);
+          }
+        }
+      }
+    }
+
+    return lines.join("\n");
+  }, [state.pageSpec]);
 
   return (
     <BuilderContext.Provider value={{ state, dispatch }}>
@@ -431,10 +486,10 @@ function ChartBuilderInner() {
               <LiveChartPreview
                 variant={selectedVariant}
                 data={queryResult?.rows ?? []}
+                columns={queryResult?.columns ?? []}
                 xAxis={xAxis}
                 yAxes={yAxes}
                 series={series}
-                format={format}
               />
             </div>
           </div>
@@ -442,7 +497,7 @@ function ChartBuilderInner() {
           {/* Code view */}
           <div className={`min-h-[400px] overflow-auto ${bottomView !== "code" ? "hidden" : ""}`}>
             <pre className="p-4 text-[12px] text-muted-foreground font-mono whitespace-pre-wrap break-words leading-[1.6]">
-              {mdxOutput || "// Add queries and charts to generate code"}
+              {yamlOutput || "# Add queries and charts to generate YAML config"}
             </pre>
           </div>
         </div>
