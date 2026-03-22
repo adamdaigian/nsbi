@@ -89,7 +89,7 @@ export function VegaChart({
     const [name, rows] = rowCapError
     return (
       <div className={className}>
-        {title && <h3 className="text-white text-sm font-semibold mb-1">{title}</h3>}
+        {title && <h3 className="text-foreground text-sm font-semibold mb-1">{title}</h3>}
         <div className="bg-red-900/20 border border-red-500/30 rounded p-4 text-red-400 text-sm">
           Dataset &quot;{name}&quot; has {rows.length.toLocaleString()} rows, which exceeds the 10,000 row limit.
           Aggregate your data in the SQL query to reduce the row count.
@@ -101,10 +101,10 @@ export function VegaChart({
   return (
     <div className={className}>
       {title && (
-        <h3 className="text-white text-sm font-semibold mb-1">{title}</h3>
+        <h3 className="text-foreground text-sm font-semibold mb-1">{title}</h3>
       )}
       {subtitle && (
-        <p className="text-gray-400 text-xs mb-2">{subtitle}</p>
+        <p className="text-muted-foreground text-xs mb-2">{subtitle}</p>
       )}
       {error ? (
         <div className="bg-red-900/20 border border-red-500/30 rounded p-4 text-red-400 text-sm">
