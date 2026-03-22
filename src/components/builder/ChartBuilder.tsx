@@ -198,18 +198,32 @@ function ChartBuilderInner() {
     setFormat("");
   }, [dispatch, queryName, sql, selectedVariant, xAxis, yAxes, series, format, state.pageSpec.queries.length, queryResult]);
 
-  // Generate YAML output from current page spec
+  // Generate YAML — live from current form state + any committed charts
   const yamlOutput = useMemo(() => {
     const ps = state.pageSpec;
-    if (ps.queries.length === 0 && ps.layout.length === 0) return "";
+    const committedCharts = ps.layout.filter((item): item is ChartSpec => "id" in item);
+
+    // Build the current working chart (not yet added to page)
+    const hasWorkingChart = selectedVariant && sql.trim();
+    const workingSpec = selectedVariant && queryResult
+      ? buildVegaSpec(selectedVariant, xAxis, yAxes, series, queryResult.columns)
+      : null;
+
+    if (ps.queries.length === 0 && committedCharts.length === 0 && !hasWorkingChart) return "";
 
     const lines: string[] = [];
     if (ps.title) lines.push(`title: ${ps.title}`);
     lines.push("");
 
-    if (ps.queries.length > 0) {
+    // Queries: committed + current working query
+    const allQueries = [...ps.queries];
+    if (hasWorkingChart && !allQueries.some((q) => q.name === queryName)) {
+      allQueries.push({ name: queryName, type: "sql", sql });
+    }
+
+    if (allQueries.length > 0) {
       lines.push("queries:");
-      for (const q of ps.queries) {
+      for (const q of allQueries) {
         lines.push(`  ${q.name}:`);
         lines.push(`    sql: |`);
         for (const sqlLine of (q.sql || "").split("\n")) {
@@ -219,20 +233,31 @@ function ChartBuilderInner() {
       lines.push("");
     }
 
-    const charts = ps.layout.filter((item): item is ChartSpec => "id" in item);
-    if (charts.length > 0) {
+    // Charts: committed + current working chart
+    const allChartEntries: { id: string; dataSource: string; preset?: string; spec: Record<string, unknown> }[] = [
+      ...committedCharts,
+    ];
+    if (hasWorkingChart && workingSpec && selectedVariant) {
+      allChartEntries.push({
+        id: `${queryName}_chart`,
+        dataSource: queryName,
+        preset: selectedVariant.type,
+        spec: workingSpec,
+      });
+    }
+
+    if (allChartEntries.length > 0) {
       lines.push("layout:");
       lines.push("  - row:");
-      for (const chart of charts) {
+      for (const chart of allChartEntries) {
         lines.push(`    - chart: ${chart.id}`);
       }
       lines.push("");
 
       lines.push("charts:");
-      for (const chart of charts) {
+      for (const chart of allChartEntries) {
         lines.push(`  ${chart.id}:`);
         lines.push(`    data: ${chart.dataSource}`);
-        if (chart.title) lines.push(`    title: ${chart.title}`);
         if (chart.preset) lines.push(`    preset: ${chart.preset}`);
         if (chart.spec?.encoding) {
           lines.push("    spec:");
@@ -247,7 +272,7 @@ function ChartBuilderInner() {
     }
 
     return lines.join("\n");
-  }, [state.pageSpec]);
+  }, [state.pageSpec, selectedVariant, sql, queryName, xAxis, yAxes, series, queryResult]);
 
   return (
     <BuilderContext.Provider value={{ state, dispatch }}>
