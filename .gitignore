@@ -32,3 +32,4 @@ npm-debug.log*
 
 .gstack/
 .superpowers/
+demo-github/data/tmp/

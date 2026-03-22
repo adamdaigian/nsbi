@@ -1,0 +1,164 @@
+title: "GitHub Pulse: March 21, 2026"
+description: 3.8M public events across all of GitHub in 24 hours
+
+queries:
+  kpis:
+    sql: |
+      SELECT
+        COUNT(*) as total_events,
+        COUNT(DISTINCT actor) as unique_users,
+        COUNT(DISTINCT repo) as unique_repos,
+        COUNT(*) FILTER (WHERE event_type = 'PushEvent') as total_pushes,
+        COUNT(*) FILTER (WHERE event_type = 'PullRequestEvent') as total_prs,
+        COUNT(*) FILTER (WHERE event_type = 'ForkEvent') as total_forks
+      FROM events
+
+  events_by_type:
+    sql: |
+      SELECT event_type, COUNT(*) as count
+      FROM events
+      GROUP BY event_type
+      ORDER BY count DESC
+
+  activity_by_hour:
+    sql: |
+      SELECT hour, COUNT(*) as events
+      FROM events
+      GROUP BY hour
+      ORDER BY hour
+
+  activity_by_hour_type:
+    sql: |
+      SELECT
+        hour,
+        CASE
+          WHEN event_type IN ('PushEvent', 'PullRequestEvent', 'PullRequestReviewEvent', 'PullRequestReviewCommentEvent')
+            THEN 'Code'
+          WHEN event_type IN ('IssuesEvent', 'IssueCommentEvent', 'CommitCommentEvent', 'DiscussionEvent')
+            THEN 'Discussion'
+          WHEN event_type IN ('CreateEvent', 'DeleteEvent', 'ForkEvent', 'PublicEvent', 'MemberEvent')
+            THEN 'Repo Management'
+          ELSE 'Other'
+        END as category,
+        COUNT(*) as events
+      FROM events
+      GROUP BY hour, category
+      ORDER BY hour
+
+  top_repos_stars:
+    sql: |
+      SELECT repo, COUNT(*) as stars
+      FROM events
+      WHERE event_type = 'WatchEvent'
+      GROUP BY repo
+      ORDER BY stars DESC
+      LIMIT 15
+
+  top_repos_prs:
+    sql: |
+      SELECT repo, COUNT(*) as prs
+      FROM events
+      WHERE event_type = 'PullRequestEvent'
+      GROUP BY repo
+      ORDER BY prs DESC
+      LIMIT 15
+
+  top_orgs:
+    sql: |
+      SELECT org, COUNT(*) as events
+      FROM events
+      GROUP BY org
+      ORDER BY events DESC
+      LIMIT 20
+
+  top_pushers:
+    sql: |
+      SELECT actor, COUNT(*) as pushes,
+        COUNT(DISTINCT repo) as repos
+      FROM events
+      WHERE event_type = 'PushEvent'
+      GROUP BY actor
+      ORDER BY pushes DESC
+      LIMIT 15
+
+layout:
+  - row:
+    - big-value: { data: kpis, value: total_events, title: Total Events }
+    - big-value: { data: kpis, value: unique_users, title: Unique Users }
+    - big-value: { data: kpis, value: unique_repos, title: Active Repos }
+    - big-value: { data: kpis, value: total_pushes, title: Pushes }
+    - big-value: { data: kpis, value: total_prs, title: Pull Requests }
+    - big-value: { data: kpis, value: total_forks, title: Forks }
+  - row:
+    - chart: hourly_activity
+  - row:
+    - chart: hourly_by_category
+  - row:
+    - chart: event_breakdown
+    - chart: top_orgs
+  - row:
+    - chart: starred_repos
+    - chart: pr_repos
+  - row:
+    - table: top_pushers
+
+charts:
+  hourly_activity:
+    data: activity_by_hour
+    title: Activity Over 24 Hours
+    preset: line
+    spec:
+      encoding:
+        x: { field: hour, type: temporal, timeUnit: hours }
+        y: { field: events, type: quantitative }
+
+  hourly_by_category:
+    data: activity_by_hour_type
+    title: Activity by Category Over 24 Hours
+    preset: stacked-area
+    spec:
+      encoding:
+        x: { field: hour, type: temporal, timeUnit: hours }
+        y: { field: events, type: quantitative }
+        color: { field: category, type: nominal }
+
+  event_breakdown:
+    data: events_by_type
+    title: Events by Type
+    preset: grouped-bar
+    spec:
+      encoding:
+        x: { field: count, type: quantitative }
+        y: { field: event_type, type: nominal, sort: "-x" }
+
+  top_orgs:
+    data: top_orgs
+    title: Most Active Organizations
+    preset: grouped-bar
+    spec:
+      encoding:
+        x: { field: events, type: quantitative }
+        y: { field: org, type: nominal, sort: "-x" }
+
+  starred_repos:
+    data: top_repos_stars
+    title: Most Starred Repos (24h)
+    preset: grouped-bar
+    spec:
+      encoding:
+        x: { field: stars, type: quantitative }
+        y: { field: repo, type: nominal, sort: "-x" }
+
+  pr_repos:
+    data: top_repos_prs
+    title: Most PR Activity
+    preset: grouped-bar
+    spec:
+      encoding:
+        x: { field: prs, type: quantitative }
+        y: { field: repo, type: nominal, sort: "-x" }
+
+tables:
+  top_pushers:
+    data: top_pushers
+    title: Top Pushers (24h)
