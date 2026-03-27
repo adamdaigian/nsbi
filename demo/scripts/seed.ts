@@ -67,9 +67,9 @@ const PLAN_FOR_SEGMENT: Record<string, string> = {
 };
 
 const BASE_MRR: Record<string, number> = {
-  starter: 500,
-  growth: 2000,
-  enterprise: 5500,
+  starter: 150,
+  growth: 500,
+  enterprise: 1500,
 };
 
 const END_DATE = new Date(2025, 5, 30); // June 30, 2025 — end of simulation window
