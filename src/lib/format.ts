@@ -43,6 +43,17 @@ export function formatValue(value: unknown, format?: string): string {
     }).format(num);
   }
 
+  // ---- Compact Currency ----
+  if (format === "usd_compact") {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return `${value as string | number | boolean}`;
+    const abs = Math.abs(num);
+    const sign = num < 0 ? "-" : "";
+    if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}K`;
+    return `${sign}$${Math.round(abs)}`;
+  }
+
   // ---- Percentages ----
   if (format === "pct" || format === "pct0") {
     const num = Number(value);
@@ -62,6 +73,17 @@ export function formatValue(value: unknown, format?: string): string {
       minimumFractionDigits: format === "num2" ? 2 : 0,
       maximumFractionDigits: format === "num2" ? 2 : 0,
     }).format(num);
+  }
+
+  // ---- Compact Numbers ----
+  if (format === "num_compact") {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return `${value as string | number | boolean}`;
+    const abs = Math.abs(num);
+    const sign = num < 0 ? "-" : "";
+    if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}K`;
+    return `${sign}${Math.round(abs)}`;
   }
 
   // ---- Dates ----
