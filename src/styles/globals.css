@@ -282,3 +282,15 @@
     font-family: var(--font-geist-sans);
   }
 }
+
+/* MDX prose styling */
+.mdx-content h1 { font-size: 1.75rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem; color: var(--foreground); }
+.mdx-content h2 { font-size: 1.375rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 0.75rem; color: var(--foreground); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.mdx-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--foreground); }
+.mdx-content p { margin-top: 0.75rem; margin-bottom: 0.75rem; color: var(--muted-foreground); line-height: 1.75; font-size: 0.9375rem; }
+.mdx-content strong { color: var(--foreground); font-weight: 600; }
+.mdx-content em { font-style: italic; }
+.mdx-content ul, .mdx-content ol { margin: 0.75rem 0; padding-left: 1.5rem; color: var(--muted-foreground); line-height: 1.75; }
+.mdx-content li { margin: 0.25rem 0; }
+.mdx-content a { color: var(--chart-1); text-decoration: underline; }
+.mdx-content blockquote { border-left: 3px solid var(--border); padding-left: 1rem; margin: 1rem 0; color: var(--muted-foreground); font-style: italic; }
