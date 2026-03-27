@@ -67,9 +67,9 @@ const PLAN_FOR_SEGMENT: Record<string, string> = {
 };
 
 const BASE_MRR: Record<string, number> = {
-  starter: 150,
-  growth: 500,
-  enterprise: 1500,
+  starter: 75,
+  growth: 200,
+  enterprise: 600,
 };
 
 const END_DATE = new Date(2025, 5, 30); // June 30, 2025 — end of simulation window
@@ -357,7 +357,7 @@ async function seed() {
       const p = phase(mo);
 
       // Expansion: more likely in later phases (machine working)
-      const expChance = p === "early" ? 0.06 : p === "mid" ? 0.10 : 0.14;
+      const expChance = p === "early" ? 0.08 : p === "mid" ? 0.12 : 0.16;
       if (Math.random() < expChance && currentMrr > 0) {
         const increase = Math.round(currentMrr * (0.08 + Math.random() * 0.22));
         currentMrr += increase;
@@ -381,8 +381,8 @@ async function seed() {
         });
       }
 
-      // Small MRR adjustments (seat changes, usage): ~55% chance per month
-      if (Math.random() < 0.55 && currentMrr > 0) {
+      // Small MRR adjustments (seat changes, usage): ~95% chance per month
+      if (Math.random() < 0.95 && currentMrr > 0) {
         // Small change: ±5% of current MRR
         const isIncrease = Math.random() < 0.70; // 70% positive (seat adds)
         const amount = Math.round(currentMrr * (0.02 + Math.random() * 0.06));
