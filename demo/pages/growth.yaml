@@ -258,7 +258,7 @@ charts:
     spec:
       encoding:
         x: { field: month, type: temporal, timeUnit: yearmonth }
-        y: { field: mrr, type: quantitative }
+        y: { field: mrr, type: quantitative, axis: { format: "$~s" } }
         color: { field: source, type: nominal }
 
   trial_funnel_chart:
