@@ -5,6 +5,9 @@ import { BigValue } from '@/components/charts/BigValue'
 import { DataTable } from '@/components/charts/DataTable'
 import { applyPreset } from '@/config/presets'
 import { useQueryEngine } from '@/engine/EngineContext'
+import { parseDocument } from '@/engine/parser'
+import { compileMDX } from '@/engine/mdx-compiler'
+import { QueryProvider, mdxComponents } from '@/components/mdx'
 
 interface DashboardPageProps {
   pagePath?: string
@@ -79,6 +82,8 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
   const [queryResults, setQueryResults] = useState<QueryResults>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [MdxContent, setMdxContent] = useState<React.ComponentType<any> | null>(null)
 
   // Fetch and parse page config
   useEffect(() => {
@@ -88,6 +93,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
       setLoading(true)
       setError(null)
       setConfig(null)
+      setMdxContent(null)
       setQueryResults({})
 
       try {
@@ -99,37 +105,66 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
 
         const { content, format } = (await res.json()) as { content: string; format: string }
 
-        if (format !== 'yaml') {
+        if (format === 'yaml') {
+          const parsed = yaml.load(content) as DashboardConfig
+          if (cancelled) return
+
+          setConfig(parsed)
+          onTitleChange?.(parsed.title || pagePath)
+
+          const queryEntries = Object.entries(parsed.queries || {})
+          const results = await Promise.all(
+            queryEntries.map(async ([name, q]) => {
+              try {
+                const result = await engine.executeQuery(q.sql)
+                return [name, result.rows] as [string, Record<string, unknown>[]]
+              } catch (err) {
+                console.error(`[nsbi] Query "${name}" failed:`, err)
+                return [name, [] as Record<string, unknown>[]] as [string, Record<string, unknown>[]]
+              }
+            })
+          )
+
+          if (cancelled) return
+
+          const resultMap: QueryResults = {}
+          for (const [name, rows] of results) {
+            resultMap[name] = rows
+          }
+          setQueryResults(resultMap)
+        } else if (format === 'md' || format === 'mdx') {
+          const doc = parseDocument(content)
+          if (cancelled) return
+
+          onTitleChange?.(doc.frontmatter.title || pagePath)
+
+          const sqlQueries = doc.queries.filter((q): q is import('@/types/document').SQLQueryBlock => q.type === 'sql')
+          const results = await Promise.all(
+            sqlQueries.map(async (q) => {
+              try {
+                const result = await engine.executeQuery(q.sql)
+                return [q.name, result.rows] as [string, Record<string, unknown>[]]
+              } catch (err) {
+                console.error(`[nsbi] Query "${q.name}" failed:`, err)
+                return [q.name, [] as Record<string, unknown>[]] as [string, Record<string, unknown>[]]
+              }
+            })
+          )
+
+          if (cancelled) return
+
+          const resultMap: QueryResults = {}
+          for (const [name, rows] of results) {
+            resultMap[name] = rows
+          }
+          setQueryResults(resultMap)
+
+          const { Component } = await compileMDX(doc.content, mdxComponents)
+          if (cancelled) return
+          setMdxContent(() => Component)
+        } else {
           throw new Error(`Unsupported page format: ${format}`)
         }
-
-        const parsed = yaml.load(content) as DashboardConfig
-        if (cancelled) return
-
-        setConfig(parsed)
-        onTitleChange?.(parsed.title || pagePath)
-
-        // Execute all queries in parallel
-        const queryEntries = Object.entries(parsed.queries || {})
-        const results = await Promise.all(
-          queryEntries.map(async ([name, q]) => {
-            try {
-              const result = await engine.executeQuery(q.sql)
-              return [name, result.rows] as [string, Record<string, unknown>[]]
-            } catch (err) {
-              console.error(`[nsbi] Query "${name}" failed:`, err)
-              return [name, [] as Record<string, unknown>[]] as [string, Record<string, unknown>[]]
-            }
-          })
-        )
-
-        if (cancelled) return
-
-        const resultMap: QueryResults = {}
-        for (const [name, rows] of results) {
-          resultMap[name] = rows
-        }
-        setQueryResults(resultMap)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : String(err))
@@ -160,6 +195,16 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
           {error}
         </div>
       </div>
+    )
+  }
+
+  if (MdxContent) {
+    return (
+      <QueryProvider results={queryResults}>
+        <div className="mdx-content space-y-6">
+          <MdxContent components={mdxComponents} />
+        </div>
+      </QueryProvider>
     )
   }
 
