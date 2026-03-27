@@ -244,7 +244,7 @@ async function seed() {
     // Conversion and churn rates by phase
     const trialConvRate = p === "early" ? 0.70 : p === "mid" ? 0.78 : 0.85;
     const directConvRate = p === "early" ? 0.93 : p === "mid" ? 0.96 : 0.98;
-    const baseChurn = p === "early" ? 0.04 : p === "mid" ? 0.03 : 0.02;
+    const baseChurn = p === "early" ? 0.015 : p === "mid" ? 0.012 : 0.008;
 
     for (let i = 0; i < count; i++) {
       nextAccountId++;
