@@ -110,7 +110,7 @@ The data tells a post-Series A inflection story:
 |---|---|---|
 | 1 | **ARR Growth** — `line` preset. Cumulative ARR over time. | **Net New MRR** — `stacked-column` preset. Monthly MRR components (new, expansion, downgrade, churn). |
 | 2 | **MRR Waterfall by Component** — `stacked-column` preset. New/expansion as positive, downgrade/churn as negative, stacked per month. | **MRR by Segment** — `stacked-area` preset. SMB/mid-market/enterprise breakdown over time. |
-| 3 | **Trial-to-Paid Conversion Rate** — `line` preset. By monthly signup cohort, ~18%→25%. | **Subscription Rate by Cohort** — `line` preset. Cohorted monthly. |
+| 3 | **Trial-to-Paid Conversion Rate** — `line` preset. By monthly signup cohort, ~18%→25%. | **Retention Rate by Cohort** — `line` preset. % of each monthly signup cohort still subscribed after N months. |
 | 4 | **Churn Rate by Segment** — `line` preset. SMB higher, enterprise lower, both trending down. | **ASP Trend** — `line` preset. Climbing from ~$800 to ~$2,500. |
 | 5 | **Estimated Cohort LTV** — `grouped-column` preset. By quarterly signup cohort. | **Expansion Revenue %** — `line` preset. Expansion MRR as % of total, growing. |
 
