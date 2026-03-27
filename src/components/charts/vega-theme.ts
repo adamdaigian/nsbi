@@ -10,6 +10,9 @@ export const CHART_COLORS = [
 
 export const northstarTheme: Config = {
   background: 'transparent',
+  mark: {
+    tooltip: { content: 'encoding' },
+  },
   font: 'var(--font-geist-sans), system-ui, sans-serif',
 
   title: {
