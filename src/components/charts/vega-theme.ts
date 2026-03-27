@@ -29,6 +29,7 @@ export const northstarTheme: Config = {
     domainColor: 'var(--border)',
     labelFontSize: 11,
     titleFontSize: 12,
+    titlePadding: 12,
   },
 
   legend: {
