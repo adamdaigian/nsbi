@@ -342,17 +342,16 @@ queries:
 layout:
   # KPI Row 1 — Account Health
   - row:
-    - big-value: { data: account_health_kpis, value: active_accounts, title: Active Accounts, format: num0, comparison: active_accounts_delta, comparisonFormat: num0, isUpGood: true }
-    - big-value: { data: account_health_kpis, value: paid_accounts, title: Paid Accounts, format: num0, comparison: paid_accounts_delta, comparisonFormat: num0, isUpGood: true }
-    - big-value: { data: account_health_kpis, value: new_accounts_30d, title: "New Accounts (30d)", format: num0, comparison: new_accounts_30d_delta, comparisonFormat: num0, isUpGood: true }
-    - big-value: { data: account_health_kpis, value: churned_accounts_30d, title: "Churned Accounts (30d)", format: num0, comparison: churned_accounts_30d_delta, comparisonFormat: num0, isUpGood: false }
+    - big-value: { data: account_health_kpis, value: active_accounts, title: Active Accounts, format: num0, comparison: active_accounts_delta, comparisonFormat: num0, isUpGood: true, comparisonLabel: "vs last month" }
+    - big-value: { data: account_health_kpis, value: new_accounts_30d, title: "New Accounts (30d)", format: num0, comparison: new_accounts_30d_delta, comparisonFormat: num0, isUpGood: true, comparisonLabel: "vs prior 30d" }
+    - big-value: { data: account_health_kpis, value: churned_accounts_30d, title: "Churned Accounts (30d)", format: num0, comparison: churned_accounts_30d_delta, comparisonFormat: num0, isUpGood: false, comparisonLabel: "vs prior 30d" }
 
   # KPI Row 2 — Revenue
   - row:
-    - big-value: { data: revenue_kpis, value: arr, title: ARR, format: usd0, comparison: arr_delta, comparisonFormat: usd0, isUpGood: true }
-    - big-value: { data: revenue_kpis, value: new_arr_month, title: "New ARR (This Month)", format: usd0, comparison: new_arr_month_delta, comparisonFormat: usd0, isUpGood: true }
-    - big-value: { data: revenue_kpis, value: churned_arr_total, title: "Churned ARR (All Time)", format: usd0 }
-    - big-value: { data: revenue_kpis, value: churned_arr_month, title: "Churned ARR (This Month)", format: usd0, comparison: churned_arr_month_delta, comparisonFormat: usd0, isUpGood: false }
+    - big-value: { data: revenue_kpis, value: arr, title: ARR, format: usd_compact, comparison: arr_delta, comparisonFormat: usd_compact, isUpGood: true, comparisonLabel: "vs last month" }
+    - big-value: { data: revenue_kpis, value: new_arr_month, title: "New ARR (This Month)", format: usd_compact, comparison: new_arr_month_delta, comparisonFormat: usd_compact, isUpGood: true, comparisonLabel: "vs last month" }
+    - big-value: { data: revenue_kpis, value: churned_arr_total, title: "Churned ARR (All Time)", format: usd_compact }
+    - big-value: { data: revenue_kpis, value: churned_arr_month, title: "Churned ARR (This Month)", format: usd_compact, comparison: churned_arr_month_delta, comparisonFormat: usd_compact, isUpGood: false, comparisonLabel: "vs last month" }
 
   # Chart Row 1
   - row:

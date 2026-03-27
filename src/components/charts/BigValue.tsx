@@ -12,6 +12,7 @@ interface BigValueProps {
   format?: string;
   comparisonFormat?: string;
   isUpGood?: boolean;
+  comparisonLabel?: string;
   title?: string;
   subtitle?: string;
   height?: number;
@@ -32,6 +33,7 @@ export function BigValue({
   format,
   comparisonFormat,
   isUpGood = true,
+  comparisonLabel,
   title,
   subtitle,
   height = 160,
@@ -65,11 +67,16 @@ export function BigValue({
           </span>
 
           {compValue != null && !Number.isNaN(compValue) && (
-            <Delta
-              value={compValue}
-              format={comparisonFormat}
-              isUpGood={isUpGood}
-            />
+            <div className="flex items-center gap-1.5">
+              <Delta
+                value={compValue}
+                format={comparisonFormat}
+                isUpGood={isUpGood}
+              />
+              {comparisonLabel && (
+                <span className="text-[11px] text-muted-foreground">{comparisonLabel}</span>
+              )}
+            </div>
           )}
         </div>
       )}

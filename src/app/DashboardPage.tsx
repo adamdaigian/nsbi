@@ -20,6 +20,7 @@ interface BigValueItem {
     comparison?: string
     comparisonFormat?: string
     isUpGood?: boolean
+    comparisonLabel?: string
   }
 }
 
@@ -191,6 +192,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
                     comparison={bv.comparison}
                     comparisonFormat={bv.comparisonFormat}
                     isUpGood={bv.isUpGood}
+                    comparisonLabel={bv.comparisonLabel}
                   />
                 </div>
               )
