@@ -5,6 +5,16 @@ import path from "path";
 let db: duckdb.Database | null = null;
 let conn: duckdb.Connection | null = null;
 
+/** Helper to open a DuckDB database and wait for it to be ready. */
+function openDatabase(dbPath: string): Promise<duckdb.Database> {
+  return new Promise((resolve, reject) => {
+    const instance = new duckdb.Database(dbPath, (err: Error | null) => {
+      if (err) return reject(err);
+      resolve(instance);
+    });
+  });
+}
+
 /**
  * Initialize DuckDB.
  * - If a .db file exists in data/, opens it directly (tables already inside).
@@ -13,7 +23,7 @@ let conn: duckdb.Connection | null = null;
 export async function initDuckDB(dataDir: string): Promise<void> {
   if (!fs.existsSync(dataDir)) {
     console.warn(`[nsbi] Data directory not found: ${dataDir}`);
-    db = new duckdb.Database(":memory:");
+    db = await openDatabase(":memory:");
     conn = new duckdb.Connection(db);
     return;
   }
@@ -24,7 +34,7 @@ export async function initDuckDB(dataDir: string): Promise<void> {
   const dbFile = files.find((f) => path.extname(f).toLowerCase() === ".db");
   if (dbFile) {
     const dbPath = path.resolve(dataDir, dbFile);
-    db = new duckdb.Database(dbPath);
+    db = await openDatabase(dbPath);
     conn = new duckdb.Connection(db);
 
     // List tables already in the .db file
@@ -32,7 +42,7 @@ export async function initDuckDB(dataDir: string): Promise<void> {
     const tableNames = tables.map((r) => r.table_name as string);
     console.log(`[nsbi] Opened ${dbFile} (tables: ${tableNames.join(", ")})`);
   } else {
-    db = new duckdb.Database(":memory:");
+    db = await openDatabase(":memory:");
     conn = new duckdb.Connection(db);
   }
 
