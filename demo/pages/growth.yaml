@@ -1,0 +1,286 @@
+title: Growth Analytics
+description: Acquisition funnel, account segmentation, and source attribution
+
+queries:
+  # ── KPI Row ───────────────────────────────────────────────────────
+  growth_kpis:
+    sql: |
+      WITH cur_total AS (
+        SELECT COUNT(*) AS total_accounts
+        FROM accounts
+      ),
+      prev_total AS (
+        SELECT COUNT(*) AS total_accounts
+        FROM accounts
+        WHERE signup_date < DATE '2025-06-01'
+      ),
+      cur_trial_conv AS (
+        SELECT
+          COUNT(*) FILTER (WHERE trial_start_date IS NOT NULL
+            AND DATE_TRUNC('month', trial_start_date) = DATE '2025-06-01') AS trials,
+          COUNT(*) FILTER (WHERE trial_start_date IS NOT NULL
+            AND DATE_TRUNC('month', trial_start_date) = DATE '2025-06-01'
+            AND converted_date IS NOT NULL) AS converted
+        FROM accounts
+      ),
+      prev_trial_conv AS (
+        SELECT
+          COUNT(*) FILTER (WHERE trial_start_date IS NOT NULL
+            AND DATE_TRUNC('month', trial_start_date) = DATE '2025-05-01') AS trials,
+          COUNT(*) FILTER (WHERE trial_start_date IS NOT NULL
+            AND DATE_TRUNC('month', trial_start_date) = DATE '2025-05-01'
+            AND converted_date IS NOT NULL) AS converted
+        FROM accounts
+      ),
+      cur_days AS (
+        SELECT ROUND(AVG(converted_date - trial_start_date)) AS avg_days
+        FROM accounts
+        WHERE converted_date IS NOT NULL
+          AND DATE_TRUNC('month', converted_date) = DATE '2025-06-01'
+      ),
+      prev_days AS (
+        SELECT ROUND(AVG(converted_date - trial_start_date)) AS avg_days
+        FROM accounts
+        WHERE converted_date IS NOT NULL
+          AND DATE_TRUNC('month', converted_date) = DATE '2025-05-01'
+      ),
+      cur_expansion AS (
+        SELECT
+          COUNT(DISTINCT se.account_id) AS expanded,
+          (SELECT COUNT(*) FROM accounts WHERE status = 'active') AS active_total
+        FROM subscription_events se
+        JOIN accounts a ON a.id = se.account_id
+        WHERE se.event_type = 'expansion'
+          AND DATE_TRUNC('month', se.event_date) = DATE '2025-06-01'
+          AND a.status = 'active'
+      ),
+      prev_expansion AS (
+        SELECT
+          COUNT(DISTINCT se.account_id) AS expanded,
+          (SELECT COUNT(*) FROM accounts
+           WHERE status IN ('active', 'churned')
+             AND signup_date < DATE '2025-06-01'
+             AND (churned_date IS NULL OR churned_date >= DATE '2025-05-01')) AS active_total
+        FROM subscription_events se
+        JOIN accounts a ON a.id = se.account_id
+        WHERE se.event_type = 'expansion'
+          AND DATE_TRUNC('month', se.event_date) = DATE '2025-05-01'
+      )
+      SELECT
+        ct.total_accounts,
+        ct.total_accounts - pt.total_accounts AS total_accounts_delta,
+        ROUND(ctc.converted * 100.0 / GREATEST(ctc.trials, 1), 0) AS trial_conversion_rate,
+        ROUND(ctc.converted * 100.0 / GREATEST(ctc.trials, 1), 0)
+          - ROUND(ptc.converted * 100.0 / GREATEST(ptc.trials, 1), 0) AS trial_conversion_rate_delta,
+        COALESCE(cd.avg_days, 0) AS avg_days_to_convert,
+        COALESCE(cd.avg_days, 0) - COALESCE(pd.avg_days, 0) AS avg_days_to_convert_delta,
+        ROUND(ce.expanded * 100.0 / GREATEST(ce.active_total, 1), 0) AS expansion_rate,
+        ROUND(ce.expanded * 100.0 / GREATEST(ce.active_total, 1), 0)
+          - ROUND(pe.expanded * 100.0 / GREATEST(pe.active_total, 1), 0) AS expansion_rate_delta
+      FROM cur_total ct, prev_total pt,
+           cur_trial_conv ctc, prev_trial_conv ptc,
+           cur_days cd, prev_days pd,
+           cur_expansion ce, prev_expansion pe
+
+  # ── Chart: Signups by Source ──────────────────────────────────────
+  signups_by_source:
+    sql: |
+      SELECT
+        DATE_TRUNC('month', signup_date) AS month,
+        source,
+        COUNT(*) AS signups
+      FROM accounts
+      GROUP BY 1, 2
+      ORDER BY month, source
+
+  # ── Chart: Signups by Segment ─────────────────────────────────────
+  signups_by_segment:
+    sql: |
+      SELECT
+        DATE_TRUNC('month', signup_date) AS month,
+        segment,
+        COUNT(*) AS signups
+      FROM accounts
+      GROUP BY 1, 2
+      ORDER BY month, segment
+
+  # ── Chart: Accounts by Plan ──────────────────────────────────────
+  accounts_by_plan:
+    sql: |
+      WITH months AS (
+        SELECT UNNEST(GENERATE_SERIES(DATE '2024-01-01', DATE '2025-06-01', INTERVAL '1' MONTH)) AS month
+      ),
+      plans AS (
+        SELECT UNNEST(['starter', 'growth', 'enterprise']) AS plan
+      ),
+      grid AS (
+        SELECT m.month, p.plan FROM months m CROSS JOIN plans p
+      ),
+      monthly_active AS (
+        SELECT
+          m.month,
+          s.plan,
+          COUNT(DISTINCT s.account_id) AS active_accounts
+        FROM months m
+        JOIN subscriptions s
+          ON s.start_date <= m.month + INTERVAL '1' MONTH - INTERVAL '1' DAY
+          AND (s.end_date IS NULL OR s.end_date >= m.month)
+          AND s.status IN ('active', 'cancelled')
+        GROUP BY m.month, s.plan
+      )
+      SELECT
+        g.month,
+        g.plan,
+        COALESCE(ma.active_accounts, 0) AS active_accounts
+      FROM grid g
+      LEFT JOIN monthly_active ma ON ma.month = g.month AND ma.plan = g.plan
+      ORDER BY g.month, g.plan
+
+  # ── Chart: Revenue by Source ──────────────────────────────────────
+  revenue_by_source:
+    sql: |
+      SELECT
+        DATE_TRUNC('month', se.event_date) AS month,
+        a.source,
+        ROUND(SUM(se.mrr_delta)) AS mrr
+      FROM subscription_events se
+      JOIN accounts a ON a.id = se.account_id
+      WHERE se.event_type = 'new'
+      GROUP BY 1, 2
+      ORDER BY month, source
+
+  # ── Chart: Trial Funnel ───────────────────────────────────────────
+  trial_funnel:
+    sql: |
+      SELECT
+        DATE_TRUNC('month', trial_start_date) AS month,
+        'Trials Started' AS metric,
+        COUNT(*) AS count
+      FROM accounts
+      WHERE trial_start_date IS NOT NULL
+      GROUP BY 1
+      UNION ALL
+      SELECT
+        DATE_TRUNC('month', trial_start_date) AS month,
+        'Converted' AS metric,
+        COUNT(*) AS count
+      FROM accounts
+      WHERE trial_start_date IS NOT NULL
+        AND converted_date IS NOT NULL
+      GROUP BY 1
+      ORDER BY month, metric
+
+  # ── Chart: Account Status Breakdown ───────────────────────────────
+  account_status:
+    sql: |
+      SELECT
+        status,
+        COUNT(*) AS count
+      FROM accounts
+      GROUP BY status
+      ORDER BY count DESC
+
+  # ── Table: Recent Signups ─────────────────────────────────────────
+  recent_signups:
+    sql: |
+      SELECT
+        name,
+        segment,
+        source,
+        signup_date,
+        status
+      FROM accounts
+      ORDER BY signup_date DESC
+      LIMIT 25
+
+layout:
+  # KPI Row
+  - row:
+    - big-value: { data: growth_kpis, value: total_accounts, title: Total Accounts, format: num0, comparison: total_accounts_delta, comparisonFormat: num0, comparisonLabel: "vs last month", isUpGood: true }
+    - big-value: { data: growth_kpis, value: trial_conversion_rate, title: Trial Conversion Rate, format: pct0, comparison: trial_conversion_rate_delta, comparisonFormat: pct0, comparisonLabel: "vs last month", isUpGood: true }
+    - big-value: { data: growth_kpis, value: avg_days_to_convert, title: Avg Days to Convert, format: num0, comparison: avg_days_to_convert_delta, comparisonFormat: num0, comparisonLabel: "vs last month", isUpGood: false }
+    - big-value: { data: growth_kpis, value: expansion_rate, title: Expansion Rate, format: pct0, comparison: expansion_rate_delta, comparisonFormat: pct0, comparisonLabel: "vs last month", isUpGood: true }
+
+  # Chart Row 1
+  - row:
+    - chart: signups_by_source_chart
+    - chart: signups_by_segment_chart
+
+  # Chart Row 2
+  - row:
+    - chart: accounts_by_plan_chart
+    - chart: revenue_by_source_chart
+
+  # Chart Row 3
+  - row:
+    - chart: trial_funnel_chart
+    - chart: account_status_chart
+
+  # Table Row
+  - row:
+    - table: recent_signups_table
+
+charts:
+  signups_by_source_chart:
+    data: signups_by_source
+    title: Signups by Source
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: signups, type: quantitative }
+        color: { field: source, type: nominal }
+
+  signups_by_segment_chart:
+    data: signups_by_segment
+    title: Signups by Segment
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: signups, type: quantitative }
+        color: { field: segment, type: nominal }
+
+  accounts_by_plan_chart:
+    data: accounts_by_plan
+    title: Accounts by Plan
+    preset: stacked-area
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: active_accounts, type: quantitative }
+        color: { field: plan, type: nominal }
+
+  revenue_by_source_chart:
+    data: revenue_by_source
+    title: Revenue by Source
+    preset: stacked-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: mrr, type: quantitative }
+        color: { field: source, type: nominal }
+
+  trial_funnel_chart:
+    data: trial_funnel
+    title: Trial Funnel
+    preset: grouped-column
+    spec:
+      encoding:
+        x: { field: month, type: temporal, timeUnit: yearmonth }
+        y: { field: count, type: quantitative }
+        color: { field: metric, type: nominal }
+
+  account_status_chart:
+    data: account_status
+    title: Account Status Breakdown
+    preset: pie
+    spec:
+      encoding:
+        theta: { field: count, type: quantitative }
+        color: { field: status, type: nominal }
+
+tables:
+  recent_signups_table:
+    data: recent_signups
+    title: Recent Signups
