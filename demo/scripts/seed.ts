@@ -67,9 +67,9 @@ const PLAN_FOR_SEGMENT: Record<string, string> = {
 };
 
 const BASE_MRR: Record<string, number> = {
-  starter: 75,
-  growth: 200,
-  enterprise: 600,
+  starter: 500,
+  growth: 2000,
+  enterprise: 5000,
 };
 
 const END_DATE = new Date(2025, 5, 30); // June 30, 2025 — end of simulation window
@@ -242,9 +242,11 @@ async function seed() {
     const srcW = p === "early" ? SOURCE_WEIGHTS_EARLY : SOURCE_WEIGHTS_LATE;
 
     // Conversion and churn rates by phase
-    const trialConvRate = p === "early" ? 0.70 : p === "mid" ? 0.78 : 0.85;
-    const directConvRate = p === "early" ? 0.93 : p === "mid" ? 0.96 : 0.98;
-    const baseChurn = p === "early" ? 0.015 : p === "mid" ? 0.012 : 0.008;
+    // Trial conversion is low (~4-8%) matching realistic PLG SaaS; improves post-Series A
+    const trialConvRate = p === "early" ? 0.04 : p === "mid" ? 0.06 : 0.08;
+    // Direct (sales-led) conversion is higher but selective
+    const directConvRate = p === "early" ? 0.10 : p === "mid" ? 0.16 : 0.22;
+    const baseChurn = p === "early" ? 0.030 : p === "mid" ? 0.022 : 0.015;
 
     for (let i = 0; i < count; i++) {
       nextAccountId++;
@@ -357,7 +359,7 @@ async function seed() {
       const p = phase(mo);
 
       // Expansion: more likely in later phases (machine working)
-      const expChance = p === "early" ? 0.08 : p === "mid" ? 0.12 : 0.16;
+      const expChance = p === "early" ? 0.06 : p === "mid" ? 0.10 : 0.14;
       if (Math.random() < expChance && currentMrr > 0) {
         const increase = Math.round(currentMrr * (0.08 + Math.random() * 0.22));
         currentMrr += increase;
@@ -381,8 +383,8 @@ async function seed() {
         });
       }
 
-      // Small MRR adjustments (seat changes, usage): ~95% chance per month
-      if (Math.random() < 0.95 && currentMrr > 0) {
+      // Small MRR adjustments (seat changes, usage): ~55% chance per month
+      if (Math.random() < 0.55 && currentMrr > 0) {
         // Small change: ±5% of current MRR
         const isIncrease = Math.random() < 0.70; // 70% positive (seat adds)
         const amount = Math.round(currentMrr * (0.02 + Math.random() * 0.06));
