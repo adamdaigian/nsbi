@@ -4,22 +4,25 @@ description: Key SaaS metrics for board reporting and executive review
 queries:
   account_kpis:
     sql: |
-      WITH current AS (
+      WITH ref AS (
+        SELECT MAX(signup_date) as ref_date FROM accounts
+      ),
+      current AS (
         SELECT
           COUNT(*) FILTER (WHERE status IN ('active', 'trial')) as active_accounts,
           COUNT(*) FILTER (WHERE status = 'active') as paid_accounts,
-          COUNT(*) FILTER (WHERE signup_date >= CURRENT_DATE - INTERVAL '30 days') as new_accounts_30d,
-          COUNT(*) FILTER (WHERE churned_date >= CURRENT_DATE - INTERVAL '30 days') as churned_accounts_30d
+          COUNT(*) FILTER (WHERE signup_date >= (SELECT ref_date FROM ref) - INTERVAL '30 days') as new_accounts_30d,
+          COUNT(*) FILTER (WHERE churned_date >= (SELECT ref_date FROM ref) - INTERVAL '30 days') as churned_accounts_30d
         FROM accounts
       ),
       prior AS (
         SELECT
-          COUNT(*) FILTER (WHERE status IN ('active', 'trial') OR (churned_date >= CURRENT_DATE - INTERVAL '30 days'))
-            - COUNT(*) FILTER (WHERE converted_date >= CURRENT_DATE - INTERVAL '30 days') as active_accounts_prior,
-          COUNT(*) FILTER (WHERE status = 'active' OR (churned_date >= CURRENT_DATE - INTERVAL '30 days'))
-            - COUNT(*) FILTER (WHERE converted_date >= CURRENT_DATE - INTERVAL '30 days') as paid_accounts_prior,
-          COUNT(*) FILTER (WHERE signup_date >= CURRENT_DATE - INTERVAL '60 days' AND signup_date < CURRENT_DATE - INTERVAL '30 days') as new_accounts_prior,
-          COUNT(*) FILTER (WHERE churned_date >= CURRENT_DATE - INTERVAL '60 days' AND churned_date < CURRENT_DATE - INTERVAL '30 days') as churned_accounts_prior
+          COUNT(*) FILTER (WHERE status IN ('active', 'trial') OR (churned_date >= (SELECT ref_date FROM ref) - INTERVAL '30 days'))
+            - COUNT(*) FILTER (WHERE converted_date >= (SELECT ref_date FROM ref) - INTERVAL '30 days') as active_accounts_prior,
+          COUNT(*) FILTER (WHERE status = 'active' OR (churned_date >= (SELECT ref_date FROM ref) - INTERVAL '30 days'))
+            - COUNT(*) FILTER (WHERE converted_date >= (SELECT ref_date FROM ref) - INTERVAL '30 days') as paid_accounts_prior,
+          COUNT(*) FILTER (WHERE signup_date >= (SELECT ref_date FROM ref) - INTERVAL '60 days' AND signup_date < (SELECT ref_date FROM ref) - INTERVAL '30 days') as new_accounts_prior,
+          COUNT(*) FILTER (WHERE churned_date >= (SELECT ref_date FROM ref) - INTERVAL '60 days' AND churned_date < (SELECT ref_date FROM ref) - INTERVAL '30 days') as churned_accounts_prior
         FROM accounts
       )
       SELECT
@@ -168,7 +171,7 @@ queries:
       months_active AS (
         SELECT
           cohort_quarter,
-          DATEDIFF('month', converted_date, COALESCE(churned_date, CURRENT_DATE)) as months_retained,
+          DATEDIFF('month', converted_date, COALESCE(churned_date, (SELECT MAX(event_date) FROM subscription_events))) as months_retained,
           COUNT(*) as accounts
         FROM cohorts
         GROUP BY cohort_quarter, months_retained
@@ -226,7 +229,7 @@ queries:
           a.id,
           DATE_TRUNC('quarter', a.converted_date) as cohort_quarter,
           s.mrr as initial_mrr,
-          DATEDIFF('month', a.converted_date, COALESCE(a.churned_date, CURRENT_DATE)) as months_active
+          DATEDIFF('month', a.converted_date, COALESCE(a.churned_date, (SELECT MAX(event_date) FROM subscription_events))) as months_active
         FROM accounts a
         JOIN subscriptions s ON s.account_id = a.id
         WHERE a.converted_date IS NOT NULL
