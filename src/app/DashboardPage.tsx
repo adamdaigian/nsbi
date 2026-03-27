@@ -12,7 +12,15 @@ interface DashboardPageProps {
 }
 
 interface BigValueItem {
-  'big-value': { data: string; value: string; title?: string }
+  'big-value': {
+    data: string
+    value: string
+    title?: string
+    format?: string
+    comparison?: string
+    comparisonFormat?: string
+    isUpGood?: boolean
+  }
 }
 
 interface ChartItem {
@@ -175,7 +183,15 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
               const data = queryResults[bv.data] || []
               return (
                 <div key={itemIdx} className="flex-1 min-w-0">
-                  <BigValue data={data} value={bv.value} title={bv.title} />
+                  <BigValue
+                    data={data}
+                    value={bv.value}
+                    title={bv.title}
+                    format={bv.format}
+                    comparison={bv.comparison}
+                    comparisonFormat={bv.comparisonFormat}
+                    isUpGood={bv.isUpGood}
+                  />
                 </div>
               )
             }
