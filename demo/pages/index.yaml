@@ -307,6 +307,7 @@ layout:
         data: revenue_kpis
         value: churned_arr_total
         format: usd_compact
+        isUpGood: false
         title: Churned ARR (All Time)
     - big-value:
         data: revenue_kpis
