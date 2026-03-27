@@ -14,8 +14,10 @@ queries:
       ),
       prior AS (
         SELECT
-          COUNT(*) FILTER (WHERE status IN ('active', 'trial') OR (churned_date >= CURRENT_DATE - INTERVAL '30 days')) as active_accounts_prior,
-          COUNT(*) FILTER (WHERE status = 'active' OR (churned_date >= CURRENT_DATE - INTERVAL '30 days')) as paid_accounts_prior,
+          COUNT(*) FILTER (WHERE status IN ('active', 'trial') OR (churned_date >= CURRENT_DATE - INTERVAL '30 days'))
+            - COUNT(*) FILTER (WHERE converted_date >= CURRENT_DATE - INTERVAL '30 days') as active_accounts_prior,
+          COUNT(*) FILTER (WHERE status = 'active' OR (churned_date >= CURRENT_DATE - INTERVAL '30 days'))
+            - COUNT(*) FILTER (WHERE converted_date >= CURRENT_DATE - INTERVAL '30 days') as paid_accounts_prior,
           COUNT(*) FILTER (WHERE signup_date >= CURRENT_DATE - INTERVAL '60 days' AND signup_date < CURRENT_DATE - INTERVAL '30 days') as new_accounts_prior,
           COUNT(*) FILTER (WHERE churned_date >= CURRENT_DATE - INTERVAL '60 days' AND churned_date < CURRENT_DATE - INTERVAL '30 days') as churned_accounts_prior
         FROM accounts
@@ -33,47 +35,61 @@ queries:
 
   revenue_kpis:
     sql: |
-      WITH current_mrr AS (
+      WITH latest_month AS (
+        SELECT DATE_TRUNC('month', MAX(event_date)) as m FROM subscription_events
+      ),
+      current_mrr AS (
         SELECT COALESCE(SUM(mrr), 0) as total_mrr
         FROM subscriptions WHERE status IN ('active', 'past_due')
       ),
+      net_mrr_this_month AS (
+        SELECT COALESCE(SUM(mrr_delta), 0) as net_mrr
+        FROM subscription_events
+        WHERE DATE_TRUNC('month', event_date) = (SELECT m FROM latest_month)
+      ),
+      net_mrr_prior_month AS (
+        SELECT COALESCE(SUM(mrr_delta), 0) as net_mrr
+        FROM subscription_events
+        WHERE DATE_TRUNC('month', event_date) = (SELECT m FROM latest_month) - INTERVAL '1 month'
+      ),
       monthly_new AS (
-        SELECT COALESCE(SUM(mrr_delta), 0) as new_arr_month
+        SELECT COALESCE(SUM(mrr_delta), 0) as new_mrr
         FROM subscription_events
         WHERE event_type = 'new'
-          AND DATE_TRUNC('month', event_date) = DATE_TRUNC('month', (SELECT MAX(event_date) FROM subscription_events))
+          AND DATE_TRUNC('month', event_date) = (SELECT m FROM latest_month)
       ),
       prior_new AS (
-        SELECT COALESCE(SUM(mrr_delta), 0) as prior_new_arr
+        SELECT COALESCE(SUM(mrr_delta), 0) as new_mrr
         FROM subscription_events
         WHERE event_type = 'new'
-          AND DATE_TRUNC('month', event_date) = DATE_TRUNC('month', (SELECT MAX(event_date) FROM subscription_events)) - INTERVAL '1 month'
+          AND DATE_TRUNC('month', event_date) = (SELECT m FROM latest_month) - INTERVAL '1 month'
       ),
       churn_total AS (
-        SELECT COALESCE(SUM(ABS(mrr_delta)), 0) as churned_arr_total
+        SELECT COALESCE(SUM(ABS(mrr_delta)), 0) as churned_mrr
         FROM subscription_events WHERE event_type = 'churn'
       ),
       churn_month AS (
-        SELECT COALESCE(SUM(ABS(mrr_delta)), 0) as churned_arr_month
+        SELECT COALESCE(SUM(ABS(mrr_delta)), 0) as churned_mrr
         FROM subscription_events
         WHERE event_type = 'churn'
-          AND DATE_TRUNC('month', event_date) = DATE_TRUNC('month', (SELECT MAX(event_date) FROM subscription_events))
+          AND DATE_TRUNC('month', event_date) = (SELECT m FROM latest_month)
       ),
       churn_prior AS (
-        SELECT COALESCE(SUM(ABS(mrr_delta)), 0) as prior_churn_arr
+        SELECT COALESCE(SUM(ABS(mrr_delta)), 0) as churned_mrr
         FROM subscription_events
         WHERE event_type = 'churn'
-          AND DATE_TRUNC('month', event_date) = DATE_TRUNC('month', (SELECT MAX(event_date) FROM subscription_events)) - INTERVAL '1 month'
+          AND DATE_TRUNC('month', event_date) = (SELECT m FROM latest_month) - INTERVAL '1 month'
       )
       SELECT
         cm.total_mrr * 12 as arr,
-        (mn.new_arr_month - pn.prior_new_arr) * 12 as arr_delta,
-        mn.new_arr_month * 12 as new_arr_month,
-        (mn.new_arr_month - pn.prior_new_arr) * 12 as new_arr_delta,
-        ct.churned_arr_total * 12 as churned_arr_total,
-        chm.churned_arr_month * 12 as churned_arr_month,
-        (chm.churned_arr_month - cp.prior_churn_arr) * 12 as churned_arr_delta
-      FROM current_mrr cm, monthly_new mn, prior_new pn, churn_total ct, churn_month chm, churn_prior cp
+        (nm.net_mrr - npm.net_mrr) * 12 as arr_delta,
+        mn.new_mrr * 12 as new_arr_month,
+        (mn.new_mrr - pn.new_mrr) * 12 as new_arr_delta,
+        ct.churned_mrr * 12 as churned_arr_total,
+        chm.churned_mrr * 12 as churned_arr_month,
+        (chm.churned_mrr - cp.churned_mrr) * 12 as churned_arr_delta
+      FROM current_mrr cm, net_mrr_this_month nm, net_mrr_prior_month npm,
+           monthly_new mn, prior_new pn, churn_total ct, churn_month chm, churn_prior cp
 
   arr_growth:
     sql: |
@@ -152,7 +168,7 @@ queries:
       months_active AS (
         SELECT
           cohort_quarter,
-          DATEDIFF('month', converted_date, COALESCE(churned_date, DATE '2025-06-30')) as months_retained,
+          DATEDIFF('month', converted_date, COALESCE(churned_date, CURRENT_DATE)) as months_retained,
           COUNT(*) as accounts
         FROM cohorts
         GROUP BY cohort_quarter, months_retained
@@ -205,20 +221,21 @@ queries:
 
   cohort_ltv:
     sql: |
-      WITH cohort_revenue AS (
+      WITH cohort_accounts AS (
         SELECT
+          a.id,
           DATE_TRUNC('quarter', a.converted_date) as cohort_quarter,
-          COUNT(DISTINCT a.id) as cohort_size,
-          SUM(se.mrr_delta) FILTER (WHERE se.event_type != 'churn') as total_revenue
+          s.mrr as initial_mrr,
+          DATEDIFF('month', a.converted_date, COALESCE(a.churned_date, CURRENT_DATE)) as months_active
         FROM accounts a
-        JOIN subscription_events se ON se.account_id = a.id
+        JOIN subscriptions s ON s.account_id = a.id
         WHERE a.converted_date IS NOT NULL
-        GROUP BY cohort_quarter
       )
       SELECT
         cohort_quarter as cohort,
-        ROUND(total_revenue / NULLIF(cohort_size, 0)) as estimated_ltv
-      FROM cohort_revenue
+        ROUND(AVG(initial_mrr * months_active)) as estimated_ltv
+      FROM cohort_accounts
+      GROUP BY cohort_quarter
       ORDER BY cohort
 
   expansion_pct:
@@ -428,7 +445,7 @@ charts:
           field: retained_accounts
           type: quantitative
           title: Retained Accounts
-        color: { field: cohort, type: temporal, timeUnit: yearquarter, title: Cohort }
+        color: { field: cohort, type: ordinal, timeUnit: yearquarter, title: Cohort }
         tooltip:
           - { field: cohort, type: temporal, timeUnit: yearquarter, title: Cohort }
           - { field: months_retained, type: quantitative, title: Month }
@@ -469,7 +486,7 @@ charts:
   cohort_ltv:
     data: cohort_ltv
     title: Estimated Cohort LTV
-    preset: grouped-column
+    preset: stacked-column
     spec:
       encoding:
         x: { field: cohort, type: temporal, timeUnit: yearquarter, title: Signup Cohort }
