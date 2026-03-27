@@ -31,26 +31,26 @@ export function startFileWatcher({ httpServer, pagesDir, dataDir, modelsDir, onM
     }
   }
 
-  // Watch pages directory for .mdx changes
-  const pagesWatcher = watch(path.join(pagesDir, "**/*.mdx"), {
+  // Watch pages directory for .md/.mdx changes
+  const pagesWatcher = watch(path.join(pagesDir, "**/*.{md,mdx}"), {
     ignoreInitial: true,
     awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 50 },
   });
 
   pagesWatcher.on("change", (filePath) => {
-    const relative = path.relative(pagesDir, filePath).replace(/\.mdx$/, "").replace(/\\/g, "/");
+    const relative = path.relative(pagesDir, filePath).replace(/\.(md|mdx)$/, "").replace(/\\/g, "/");
     console.log(`[nsbi] Page changed: ${relative}`);
     broadcast({ type: "page-change", path: relative });
   });
 
   pagesWatcher.on("add", (filePath) => {
-    const relative = path.relative(pagesDir, filePath).replace(/\.mdx$/, "").replace(/\\/g, "/");
+    const relative = path.relative(pagesDir, filePath).replace(/\.(md|mdx)$/, "").replace(/\\/g, "/");
     console.log(`[nsbi] Page added: ${relative}`);
     broadcast({ type: "pages-update", path: relative });
   });
 
   pagesWatcher.on("unlink", (filePath) => {
-    const relative = path.relative(pagesDir, filePath).replace(/\.mdx$/, "").replace(/\\/g, "/");
+    const relative = path.relative(pagesDir, filePath).replace(/\.(md|mdx)$/, "").replace(/\\/g, "/");
     console.log(`[nsbi] Page removed: ${relative}`);
     broadcast({ type: "pages-update", path: relative });
   });

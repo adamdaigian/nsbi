@@ -180,13 +180,20 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
     try {
       const pagePath = (req.query.path as string) || "index";
 
-      // Try YAML first, then fall back to MDX
+      // Try YAML first, then .md, then fall back to MDX
       const yamlPath = path.resolve(pagesDir, `${pagePath}.yaml`);
+      const mdPath = path.resolve(pagesDir, `${pagePath}.md`);
       const mdxPath = path.resolve(pagesDir, `${pagePath}.mdx`);
 
       if (fs.existsSync(yamlPath)) {
         const content = fs.readFileSync(yamlPath, "utf-8");
         res.json({ content, format: "yaml" });
+        return;
+      }
+
+      if (fs.existsSync(mdPath)) {
+        const content = fs.readFileSync(mdPath, "utf-8");
+        res.json({ content, format: "md" });
         return;
       }
 
@@ -333,7 +340,7 @@ function scanPages(dir: string, rootDir: string): PageNode[] {
           children,
         });
       }
-    } else if (entry.name.endsWith(".yaml") || entry.name.endsWith(".mdx")) {
+    } else if (entry.name.endsWith(".yaml") || entry.name.endsWith(".md") || entry.name.endsWith(".mdx")) {
       const ext = path.extname(entry.name);
       const relativePath = path
         .relative(rootDir, fullPath)
