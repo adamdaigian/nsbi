@@ -49,7 +49,14 @@ export function Sidebar({ currentPage, onNavigate, mobileOpen, onMobileClose, sc
     setCollapsed((prev) => ({ ...prev, [dirPath]: !prev[dirPath] }));
   };
 
+  const PAGE_LABELS: Record<string, string> = {
+    "index": "Executive Metrics (L0)",
+    "channel-analysis": "Channel Analysis (L1)",
+    "key-drivers": "Key Drivers (L2)",
+  };
+
   const formatName = (name: string) => {
+    if (PAGE_LABELS[name]) return PAGE_LABELS[name];
     return name
       .replace(/[-_]/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
