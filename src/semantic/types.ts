@@ -149,6 +149,35 @@ export interface SemanticQuery {
   limit?: number;
 }
 
+// ─── Semantic Query API Schema (for request validation) ─────────────────────
+
+export const semanticQueryApiSchema = z.object({
+  topicId: z.string(),
+  dimensions: z.array(z.string()),
+  measures: z.array(z.string()),
+  filters: z.array(z.object({
+    field: z.string(),
+    operator: z.enum(["eq", "neq", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "not_contains", "is_null", "is_not_null"]),
+    value: z.unknown(),
+  })),
+  timeGrain: z.enum(["HOUR", "DAY", "WEEK", "MONTH", "QUARTER", "YEAR"]).optional(),
+  dateRange: z.union([
+    z.object({ type: z.literal("relative"), amount: z.number(), unit: z.string() }),
+    z.object({ type: z.literal("absolute"), start: z.string(), end: z.string() }),
+    z.object({ type: z.literal("shortcut"), shortcut: z.string() }),
+  ]).optional(),
+  comparison: z.union([
+    z.object({ type: z.literal("relative"), amount: z.number(), unit: z.string() }),
+    z.object({ type: z.literal("absolute"), start: z.string(), end: z.string() }),
+    z.object({ type: z.literal("shortcut"), shortcut: z.string() }),
+  ]).optional(),
+  orderBy: z.array(z.object({
+    field: z.string(),
+    direction: z.enum(["asc", "desc"]),
+  })).optional(),
+  limit: z.number().optional(),
+});
+
 // ─── Compiled Query ──────────────────────────────────────────────────────────
 
 export interface JoinEdge {

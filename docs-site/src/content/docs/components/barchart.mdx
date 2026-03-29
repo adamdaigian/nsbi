@@ -10,27 +10,18 @@ description: A bar chart for comparing values across categories.
 | data | string | Yes | — | Name of the SQL query to use as the data source. |
 | x | string | Yes | — | Column to map to the category axis. |
 | y | string | Yes | — | Column to map to the value axis (numeric values). |
-| series | string | No | — | Column used to split data into grouped or stacked bar series. |
-| horizontal | boolean | No | `false` | Whether to render bars horizontally instead of vertically. |
-| stacked | boolean | No | `false` | Whether to stack bars on top of each other instead of grouping them side by side. |
-| sort | `"asc"` \| `"desc"` | No | — | Sort bars by value in ascending or descending order. |
-| labels | boolean | No | `false` | Whether to display value labels on each bar. |
-| xFmt | string | No | — | Format string for category-axis labels. |
-| yFmt | string | No | — | Format string for value-axis labels (e.g. `"$#,##0"` for currency). |
+| color | string | No | — | Column used to split data into grouped or stacked bar series. |
+| stack | boolean | No | `false` | Whether to stack bars on top of each other instead of grouping side by side. |
 | title | string | No | — | Title displayed above the chart. |
-| subtitle | string | No | — | Subtitle displayed below the title. |
-| height | number | No | `400` | Height of the chart in pixels. |
-| colorPalette | string[] | No | — | Custom array of color hex codes for the series. |
+| yFormat | string | No | — | Vega-Lite format string for value-axis labels (e.g. `"$~s"` for compact currency). |
+| xTimeUnit | string | No | — | Vega-Lite time unit for x-axis (e.g. `"yearmonth"`). Use when x is a date field. |
 
 ## Example
 
 ```mdx
 ```sql
 -- name: sales_by_region
-SELECT
-  region,
-  sales_channel,
-  SUM(amount) AS total_sales
+SELECT region, sales_channel, SUM(amount) AS total_sales
 FROM sales
 WHERE sale_date >= '2025-01-01'
 GROUP BY region, sales_channel
@@ -41,12 +32,17 @@ ORDER BY total_sales DESC
   data="sales_by_region"
   x="region"
   y="total_sales"
-  series="sales_channel"
-  stacked
-  labels
-  sort="desc"
-  yFmt="$#,##0"
+  color="sales_channel"
+  stack
+  yFormat="$~s"
   title="Sales by Region"
-  subtitle="Year to date, by channel"
 />
+```
+
+### Grouped bars
+
+Omit `stack` to show bars side by side:
+
+```mdx
+<BarChart data="sales_by_region" x="region" y="total_sales" color="sales_channel" title="Sales by Region" />
 ```

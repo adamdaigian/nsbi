@@ -6,6 +6,16 @@ interface DataManifest {
   files: { name: string; type: "db" | "csv" | "parquet" }[];
 }
 
+/** Escape a SQL identifier for safe use in double-quoted contexts */
+function escapeIdent(name: string): string {
+  return '"' + name.replace(/"/g, '""') + '"';
+}
+
+/** Escape a string literal for safe use in single-quoted SQL contexts */
+function escapeLiteral(value: string): string {
+  return "'" + value.replace(/'/g, "''") + "'";
+}
+
 /**
  * Production query engine — runs DuckDB WASM in the browser.
  * Loads data files from /_nsbi_data/ based on a manifest.
@@ -68,7 +78,7 @@ export class WasmQueryEngine implements QueryEngine {
         if (file.type === "db") {
           // Register the entire database file
           await this.db!.registerFileBuffer(file.name, buffer);
-          await this.conn!.query(`ATTACH '${file.name}' AS attached_db`);
+          await this.conn!.query(`ATTACH ${escapeLiteral(file.name)} AS attached_db`);
           // Copy tables from attached DB to main
           const tables = await this.conn!.query(
             "SELECT table_name FROM attached_db.information_schema.tables WHERE table_schema = 'main'",
@@ -76,19 +86,19 @@ export class WasmQueryEngine implements QueryEngine {
           for (const row of tables.toArray()) {
             const tbl = row.table_name as string;
             await this.conn!.query(
-              `CREATE TABLE IF NOT EXISTS "${tbl}" AS SELECT * FROM attached_db."${tbl}"`,
+              `CREATE TABLE IF NOT EXISTS ${escapeIdent(tbl)} AS SELECT * FROM attached_db.${escapeIdent(tbl)}`,
             );
           }
           await this.conn!.query("DETACH attached_db");
         } else if (file.type === "csv") {
           await this.db!.registerFileBuffer(file.name, buffer);
           await this.conn!.query(
-            `CREATE OR REPLACE TABLE "${tableName}" AS SELECT * FROM read_csv_auto('${file.name}')`,
+            `CREATE OR REPLACE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_csv_auto(${escapeLiteral(file.name)})`,
           );
         } else if (file.type === "parquet") {
           await this.db!.registerFileBuffer(file.name, buffer);
           await this.conn!.query(
-            `CREATE OR REPLACE TABLE "${tableName}" AS SELECT * FROM read_parquet('${file.name}')`,
+            `CREATE OR REPLACE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_parquet(${escapeLiteral(file.name)})`,
           );
         }
       }
@@ -137,7 +147,7 @@ export class WasmQueryEngine implements QueryEngine {
 
       // Get columns
       const colsResult = await this.conn.query(
-        `SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '${tableName}' ORDER BY ordinal_position`,
+        `SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'main' AND table_name = ${escapeLiteral(tableName)} ORDER BY ordinal_position`,
       );
 
       const columns: TableColumn[] = colsResult.toArray().map((col) => ({
@@ -150,7 +160,7 @@ export class WasmQueryEngine implements QueryEngine {
       let rowCount = 0;
       try {
         const countResult = await this.conn.query(
-          `SELECT COUNT(*) as cnt FROM "${tableName}"`,
+          `SELECT COUNT(*) as cnt FROM ${escapeIdent(tableName)}`,
         );
         const countRow = countResult.toArray()[0];
         if (countRow) {

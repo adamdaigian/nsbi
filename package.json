@@ -7,9 +7,7 @@
     ".": "./src/components/index.ts",
     "./components": "./src/components/index.ts",
     "./semantic": "./src/semantic/types.ts",
-    "./semantic/compiler": "./src/semantic/compiler/index.ts",
-    "./bridge": "./extensions/northstar/adapter.ts",
-    "./export": "./extensions/northstar/export.ts"
+    "./semantic/compiler": "./src/semantic/compiler/index.ts"
   },
   "scripts": {
     "dev": "tsx cli/index.ts dev --project ./demo",
@@ -18,6 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.87",
     "@duckdb/duckdb-wasm": "^1.33.1-dev20.0",
     "@mdx-js/mdx": "^3.1.0",
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -43,7 +42,7 @@
     "vega-embed": "^7.1.0",
     "vega-lite": "^6.4.2",
     "ws": "^8.19.0",
-    "zod": "^3.24.2"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.3",

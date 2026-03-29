@@ -53,7 +53,7 @@ SELECT DATE_TRUNC('month', created_at) as month, COUNT(*) as signups
 FROM users GROUP BY 1 ORDER BY 1
 ```
 
-<LineChart data="monthly_trend" x="month" y="signups" xFmt="month" title="Monthly Signups" />
+<LineChart data="monthly_trend" x="month" y="signups" xTimeUnit="yearmonth" title="Monthly Signups" />
 ```
 
 Save the file — the dashboard updates instantly via hot reload.

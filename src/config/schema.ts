@@ -9,24 +9,24 @@ export const nsbiConfigSchema = z.object({
     .object({
       dir: z.string().default("data"),
     })
-    .default({}),
+    .default({ dir: "data" }),
   models: z
     .object({
       dir: z.string().default("models"),
     })
-    .default({}),
+    .default({ dir: "models" }),
   ai: z
     .object({
       provider: z.enum(["anthropic", "openai"]).default("anthropic"),
       apiKey: z.string().optional(),
       model: z.string().default("claude-sonnet-4-20250514"),
     })
-    .default({}),
+    .default({ provider: "anthropic", model: "claude-sonnet-4-20250514" }),
   build: z
     .object({
       outDir: z.string().default("dist"),
     })
-    .default({}),
+    .default({ outDir: "dist" }),
 });
 
 export type NsbiConfig = z.infer<typeof nsbiConfigSchema>;

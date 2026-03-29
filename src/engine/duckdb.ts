@@ -2,6 +2,16 @@ import duckdb from "duckdb";
 import fs from "fs";
 import path from "path";
 
+/** Escape a SQL identifier for safe use in double-quoted contexts */
+function escapeIdent(name: string): string {
+  return '"' + name.replace(/"/g, '""') + '"';
+}
+
+/** Escape a string literal for safe use in single-quoted SQL contexts */
+function escapeLiteral(value: string): string {
+  return "'" + value.replace(/'/g, "''") + "'";
+}
+
 let db: duckdb.Database | null = null;
 let conn: duckdb.Connection | null = null;
 
@@ -54,12 +64,12 @@ export async function initDuckDB(dataDir: string): Promise<void> {
 
     if (ext === ".csv") {
       await runQuery(
-        `CREATE OR REPLACE TABLE "${tableName}" AS SELECT * FROM read_csv_auto('${filePath}')`,
+        `CREATE OR REPLACE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_csv_auto(${escapeLiteral(filePath)})`,
       );
       console.log(`[nsbi] Registered table "${tableName}" from ${file}`);
     } else if (ext === ".parquet") {
       await runQuery(
-        `CREATE OR REPLACE TABLE "${tableName}" AS SELECT * FROM read_parquet('${filePath}')`,
+        `CREATE OR REPLACE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_parquet(${escapeLiteral(filePath)})`,
       );
       console.log(`[nsbi] Registered table "${tableName}" from ${file}`);
     }
@@ -137,15 +147,15 @@ export async function reRegisterTable(filePath: string): Promise<void> {
   const resolved = path.resolve(filePath);
 
   if (ext === ".csv") {
-    await runQuery(`DROP TABLE IF EXISTS "${tableName}"`);
+    await runQuery(`DROP TABLE IF EXISTS ${escapeIdent(tableName)}`);
     await runQuery(
-      `CREATE TABLE "${tableName}" AS SELECT * FROM read_csv_auto('${resolved}')`,
+      `CREATE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_csv_auto(${escapeLiteral(resolved)})`,
     );
     console.log(`[nsbi] Re-registered table "${tableName}" from ${path.basename(filePath)}`);
   } else if (ext === ".parquet") {
-    await runQuery(`DROP TABLE IF EXISTS "${tableName}"`);
+    await runQuery(`DROP TABLE IF EXISTS ${escapeIdent(tableName)}`);
     await runQuery(
-      `CREATE TABLE "${tableName}" AS SELECT * FROM read_parquet('${resolved}')`,
+      `CREATE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_parquet(${escapeLiteral(resolved)})`,
     );
     console.log(`[nsbi] Re-registered table "${tableName}" from ${path.basename(filePath)}`);
   }

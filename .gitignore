@@ -7,6 +7,9 @@ dist/
 # Internal docs
 CLAUDE.md
 
+# Claude Code
+.claude/
+
 # Environment
 .env
 .env.*
@@ -32,4 +35,3 @@ npm-debug.log*
 
 .gstack/
 .superpowers/
-demo-github/data/tmp/

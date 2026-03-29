@@ -13,6 +13,7 @@ export interface PageNode {
 import type { SemanticModel, SemanticQuery } from "@/semantic/types";
 import { compile } from "@/semantic/compiler/index";
 import { buildNsbiSystemPrompt } from "@/ai/prompts";
+import { semanticQueryApiSchema } from "@/semantic/types";
 import { streamChatCompletion, type ChatMessage } from "@/ai/client";
 
 export interface ApiRouterOptions {
@@ -29,6 +30,16 @@ export function getSemanticModel(): SemanticModel | null {
 
 export function setSemanticModel(model: SemanticModel | null) {
   currentSemanticModel = model;
+}
+
+/** Escape a SQL identifier for safe use in double-quoted contexts */
+function escapeIdent(name: string): string {
+  return '"' + name.replace(/"/g, '""') + '"';
+}
+
+/** Escape a string literal for safe use in single-quoted SQL contexts */
+function escapeLiteral(value: string): string {
+  return "'" + value.replace(/'/g, "''") + "'";
 }
 
 export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): Router {
@@ -75,7 +86,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
         const tableName = row.table_name as string;
 
         const colsResult = await executeQuery(
-          `SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '${tableName}' ORDER BY ordinal_position`,
+          `SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'main' AND table_name = ${escapeLiteral(tableName)} ORDER BY ordinal_position`,
         );
 
         const columns: TableColumn[] = colsResult.rows.map((col) => ({
@@ -87,7 +98,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
         let rowCount = 0;
         try {
           const countResult = await executeQuery(
-            `SELECT COUNT(*) as cnt FROM "${tableName}"`,
+            `SELECT COUNT(*) as cnt FROM ${escapeIdent(tableName)}`,
           );
           if (countResult.rows[0]) {
             rowCount = Number(countResult.rows[0].cnt);
@@ -122,7 +133,12 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
         return;
       }
 
-      const query = req.body as SemanticQuery;
+      const parsed = semanticQueryApiSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid query: " + parsed.error.issues.map(i => i.message).join(", ") });
+        return;
+      }
+      const query = parsed.data as SemanticQuery;
       const compiled = compile(query, { model });
       const result = await executeQuery(compiled.sql);
 
@@ -180,10 +196,18 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
     try {
       const pagePath = (req.query.path as string) || "index";
 
+      // Prevent path traversal — ensure resolved path stays within pagesDir
+      const resolvedBase = path.resolve(pagesDir);
+      const resolvedPage = path.resolve(pagesDir, pagePath);
+      if (!resolvedPage.startsWith(resolvedBase + path.sep) && resolvedPage !== resolvedBase) {
+        res.status(400).json({ error: "Invalid page path" });
+        return;
+      }
+
       // Try YAML first, then .md, then fall back to MDX
-      const yamlPath = path.resolve(pagesDir, `${pagePath}.yaml`);
-      const mdPath = path.resolve(pagesDir, `${pagePath}.md`);
-      const mdxPath = path.resolve(pagesDir, `${pagePath}.mdx`);
+      const yamlPath = `${resolvedPage}.yaml`;
+      const mdPath = `${resolvedPage}.md`;
+      const mdxPath = `${resolvedPage}.mdx`;
 
       if (fs.existsSync(yamlPath)) {
         const content = fs.readFileSync(yamlPath, "utf-8");
@@ -234,9 +258,9 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
         for (const row of schemaResult.rows) {
           const tableName = row.table_name as string;
           const colsResult = await executeQuery(
-            `SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '${tableName}' ORDER BY ordinal_position`,
+            `SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'main' AND table_name = ${escapeLiteral(tableName)} ORDER BY ordinal_position`,
           );
-          const countResult = await executeQuery(`SELECT COUNT(*) as cnt FROM "${tableName}"`);
+          const countResult = await executeQuery(`SELECT COUNT(*) as cnt FROM ${escapeIdent(tableName)}`);
           tables.push({
             name: tableName,
             columns: colsResult.rows.map((c) => ({

@@ -76,12 +76,27 @@ function isTableItem(item: LayoutItem): item is TableItem {
   return 'table' in item
 }
 
+function QueryErrorBanner({ errors }: { errors: Record<string, string> }) {
+  const entries = Object.entries(errors)
+  if (entries.length === 0) return null
+  return (
+    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-sm space-y-1">
+      {entries.map(([name, error]) => (
+        <p key={name} className="text-red-400">
+          <span className="font-medium">{name}:</span> {error}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPageProps) {
   const engine = useQueryEngine()
   const [config, setConfig] = useState<DashboardConfig | null>(null)
   const [queryResults, setQueryResults] = useState<QueryResults>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [queryErrors, setQueryErrors] = useState<Record<string, string>>({})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [MdxContent, setMdxContent] = useState<React.ComponentType<any> | null>(null)
 
@@ -95,6 +110,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
       setConfig(null)
       setMdxContent(null)
       setQueryResults({})
+      setQueryErrors({})
 
       try {
         const res = await fetch(`/api/page?path=${encodeURIComponent(pagePath)}`)
@@ -113,13 +129,16 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
           onTitleChange?.(parsed.title || pagePath)
 
           const queryEntries = Object.entries(parsed.queries || {})
+          const errors: Record<string, string> = {}
           const results = await Promise.all(
             queryEntries.map(async ([name, q]) => {
               try {
                 const result = await engine.executeQuery(q.sql)
                 return [name, result.rows] as [string, Record<string, unknown>[]]
               } catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
                 console.error(`[nsbi] Query "${name}" failed:`, err)
+                errors[name] = message
                 return [name, [] as Record<string, unknown>[]] as [string, Record<string, unknown>[]]
               }
             })
@@ -132,6 +151,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
             resultMap[name] = rows
           }
           setQueryResults(resultMap)
+          setQueryErrors(errors)
         } else if (format === 'md' || format === 'mdx') {
           const doc = parseDocument(content)
           if (cancelled) return
@@ -139,13 +159,16 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
           onTitleChange?.(doc.frontmatter.title || pagePath)
 
           const sqlQueries = doc.queries.filter((q): q is import('@/types/document').SQLQueryBlock => q.type === 'sql')
+          const errors: Record<string, string> = {}
           const results = await Promise.all(
             sqlQueries.map(async (q) => {
               try {
                 const result = await engine.executeQuery(q.sql)
                 return [q.name, result.rows] as [string, Record<string, unknown>[]]
               } catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
                 console.error(`[nsbi] Query "${q.name}" failed:`, err)
+                errors[q.name] = message
                 return [q.name, [] as Record<string, unknown>[]] as [string, Record<string, unknown>[]]
               }
             })
@@ -158,6 +181,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
             resultMap[name] = rows
           }
           setQueryResults(resultMap)
+          setQueryErrors(errors)
 
           const { Component } = await compileMDX(doc.content, mdxComponents)
           if (cancelled) return
@@ -202,6 +226,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
     return (
       <QueryProvider results={queryResults}>
         <div className="mdx-content space-y-6">
+          <QueryErrorBanner errors={queryErrors} />
           <MdxContent components={mdxComponents} />
         </div>
       </QueryProvider>
@@ -212,6 +237,7 @@ export function DashboardPage({ pagePath = 'index', onTitleChange }: DashboardPa
 
   return (
     <div className="space-y-6">
+      <QueryErrorBanner errors={queryErrors} />
       {config.title && (
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">{config.title}</h1>
