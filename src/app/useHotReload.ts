@@ -6,7 +6,7 @@ interface HotReloadMessage {
 }
 
 /**
- * Connects to the nsbi dev server WebSocket for hot reload notifications.
+ * Connects to the Polaris dev server WebSocket for hot reload notifications.
  * Calls `onPageChange` when the current page's .mdx file changes.
  * Calls `onDataChange` when a data file changes.
  * Calls `onPagesUpdate` when the page tree changes (add/remove).
@@ -30,7 +30,7 @@ export function useHotReload({
     if (disabled) return;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${protocol}//${window.location.host}/__nsbi_ws`);
+    const ws = new WebSocket(`${protocol}//${window.location.host}/__polaris_ws`);
     wsRef.current = ws;
 
     ws.onmessage = (event) => {

@@ -14,7 +14,7 @@ The selected date is displayed in `MMM d, yyyy` format (e.g. "Jan 15, 2025"). A 
 
 ## Example
 
-```mdx
+````mdx
 <DateInput name="as_of_date" label="As of Date" />
 
 ```sql
@@ -28,11 +28,11 @@ ORDER BY metric
 ```
 
 <DataTable data="snapshot" />
-```
+````
 
 ### Comparing two dates
 
-```mdx
+````mdx
 <Grid cols={2}>
   <DateInput name="start_date" label="Start Date" />
   <DateInput name="end_date" label="End Date" />
@@ -51,4 +51,4 @@ ORDER BY 1
 ```
 
 <LineChart data="date_range_data" x="day" y="events" xFmt="MMM d" title="Events Over Time" />
-```
+````

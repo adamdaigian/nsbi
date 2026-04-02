@@ -1,32 +1,32 @@
 {
-  "name": "nsbi",
-  "displayName": "nsbi - BI as Code",
-  "description": "Syntax highlighting, preview, and autocomplete for nsbi MDX dashboards",
+  "name": "polaris",
+  "displayName": "polaris - BI as Code",
+  "description": "Syntax highlighting, preview, and autocomplete for polaris MDX dashboards",
   "version": "0.1.0",
-  "publisher": "nsbi",
+  "publisher": "polaris",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": ["Programming Languages", "Visualization"],
   "activationEvents": [
-    "onLanguage:nsbi-mdx",
+    "onLanguage:polaris-mdx",
     "workspaceContains:**/*.mdx"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
       {
-        "id": "nsbi-mdx",
-        "aliases": ["nsbi MDX", "nsbi"],
+        "id": "polaris-mdx",
+        "aliases": ["polaris MDX", "polaris"],
         "extensions": [".mdx"],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "nsbi-mdx",
-        "scopeName": "source.nsbi-mdx",
-        "path": "./syntaxes/nsbi-mdx.tmLanguage.json",
+        "language": "polaris-mdx",
+        "scopeName": "source.polaris-mdx",
+        "path": "./syntaxes/polaris-mdx.tmLanguage.json",
         "embeddedLanguages": {
           "meta.embedded.block.sql": "sql",
           "meta.embedded.block.javascript": "javascript"
@@ -35,16 +35,16 @@
     ],
     "commands": [
       {
-        "command": "nsbi.openPreview",
-        "title": "nsbi: Open Dashboard Preview",
+        "command": "polaris.openPreview",
+        "title": "polaris: Open Dashboard Preview",
         "icon": "$(open-preview)"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "when": "resourceLangId == nsbi-mdx",
-          "command": "nsbi.openPreview",
+          "when": "resourceLangId == polaris-mdx",
+          "command": "polaris.openPreview",
           "group": "navigation"
         }
       ]

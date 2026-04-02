@@ -1,16 +1,16 @@
 ---
 title: CLI Reference
-description: nsbi command-line interface
+description: Polaris command-line interface
 ---
 
 ## Commands
 
-### `nsbi dev`
+### `polaris dev`
 
 Start the development server with hot reload.
 
 ```bash
-nsbi dev [options]
+polaris dev [options]
 ```
 
 | Option | Default | Description |
@@ -18,38 +18,38 @@ nsbi dev [options]
 | `--project <path>` | `.` | Project directory (must contain `pages/`) |
 | `--port <port>` | `3000` | Port to listen on |
 
-### `nsbi init`
+### `polaris init`
 
-Scaffold a new nsbi project.
+Scaffold a new Polaris project.
 
 ```bash
-nsbi init [name] [options]
+polaris init [name] [options]
 ```
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--template <name>` | `blank` | Template: `blank`, `saas-metrics`, `sales-pipeline`, `product-analytics` |
 
-### `nsbi build`
+### `polaris build`
 
 Build for production. Pre-executes queries and generates a static site.
 
 ```bash
-nsbi build [options]
+polaris build [options]
 ```
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--project <path>` | `.` | Project directory |
 
-Output goes to the directory specified in `nsbi.config.ts` (default: `dist/`).
+Output goes to the directory specified in `polaris.config.ts` (default: `dist/`).
 
-### `nsbi preview`
+### `polaris preview`
 
 Preview the production build locally.
 
 ```bash
-nsbi preview [options]
+polaris preview [options]
 ```
 
 | Option | Default | Description |

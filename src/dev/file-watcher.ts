@@ -14,7 +14,7 @@ export interface FileWatcherOptions {
 
 export function startFileWatcher({ httpServer, pagesDir, dataDir, modelsDir, onModelsChange }: FileWatcherOptions) {
   // WebSocket server on /ws path (avoids conflict with Vite's own WS)
-  const wss = new WebSocketServer({ server: httpServer, path: "/__nsbi_ws" });
+  const wss = new WebSocketServer({ server: httpServer, path: "/__polaris_ws" });
   const clients = new Set<WebSocket>();
 
   wss.on("connection", (ws) => {
@@ -39,19 +39,19 @@ export function startFileWatcher({ httpServer, pagesDir, dataDir, modelsDir, onM
 
   pagesWatcher.on("change", (filePath) => {
     const relative = path.relative(pagesDir, filePath).replace(/\.(md|mdx)$/, "").replace(/\\/g, "/");
-    console.log(`[nsbi] Page changed: ${relative}`);
+    console.log(`[polaris] Page changed: ${relative}`);
     broadcast({ type: "page-change", path: relative });
   });
 
   pagesWatcher.on("add", (filePath) => {
     const relative = path.relative(pagesDir, filePath).replace(/\.(md|mdx)$/, "").replace(/\\/g, "/");
-    console.log(`[nsbi] Page added: ${relative}`);
+    console.log(`[polaris] Page added: ${relative}`);
     broadcast({ type: "pages-update", path: relative });
   });
 
   pagesWatcher.on("unlink", (filePath) => {
     const relative = path.relative(pagesDir, filePath).replace(/\.(md|mdx)$/, "").replace(/\\/g, "/");
-    console.log(`[nsbi] Page removed: ${relative}`);
+    console.log(`[polaris] Page removed: ${relative}`);
     broadcast({ type: "pages-update", path: relative });
   });
 
@@ -62,22 +62,22 @@ export function startFileWatcher({ httpServer, pagesDir, dataDir, modelsDir, onM
   });
 
   dataWatcher.on("change", async (filePath) => {
-    console.log(`[nsbi] Data file changed: ${path.basename(filePath)}`);
+    console.log(`[polaris] Data file changed: ${path.basename(filePath)}`);
     try {
       await reRegisterTable(filePath);
       broadcast({ type: "data-change", path: filePath });
     } catch (err) {
-      console.error(`[nsbi] Failed to re-register table:`, err);
+      console.error(`[polaris] Failed to re-register table:`, err);
     }
   });
 
   dataWatcher.on("add", async (filePath) => {
-    console.log(`[nsbi] Data file added: ${path.basename(filePath)}`);
+    console.log(`[polaris] Data file added: ${path.basename(filePath)}`);
     try {
       await reRegisterTable(filePath);
       broadcast({ type: "data-change", path: filePath });
     } catch (err) {
-      console.error(`[nsbi] Failed to register table:`, err);
+      console.error(`[polaris] Failed to register table:`, err);
     }
   });
 
@@ -89,7 +89,7 @@ export function startFileWatcher({ httpServer, pagesDir, dataDir, modelsDir, onM
     });
 
     const handleModelChange = (filePath: string) => {
-      console.log(`[nsbi] Model file changed: ${path.basename(filePath)}`);
+      console.log(`[polaris] Model file changed: ${path.basename(filePath)}`);
       onModelsChange?.();
       broadcast({ type: "data-change", path: filePath });
     };
@@ -99,5 +99,5 @@ export function startFileWatcher({ httpServer, pagesDir, dataDir, modelsDir, onM
     modelsWatcher.on("unlink", handleModelChange);
   }
 
-  console.log(`[nsbi] File watcher active (pages + data${modelsDir ? " + models" : ""})`);
+  console.log(`[polaris] File watcher active (pages + data${modelsDir ? " + models" : ""})`);
 }

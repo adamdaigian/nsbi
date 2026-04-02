@@ -10,7 +10,7 @@ export function useAIChat() {
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const sendMessage = useCallback(async (userMessage: string) => {
+  const sendMessage = useCallback(async (userMessage: string, pageContent?: string) => {
     const userMsg: AIChatMessage = { role: "user", content: userMessage };
     setMessages((prev) => [...prev, userMsg]);
     setIsStreaming(true);
@@ -28,6 +28,7 @@ export function useAIChat() {
             role: m.role,
             content: m.content,
           })),
+          pageContent,
         }),
         signal: abortRef.current.signal,
       });

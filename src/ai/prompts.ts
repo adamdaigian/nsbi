@@ -7,154 +7,161 @@ interface TopicContext {
   measures: string[];
 }
 
-interface NsbiPromptContext {
+interface PolarisPromptContext {
   schema?: SchemaMetadata;
   topics?: TopicContext[];
   existingContent?: string;
 }
 
-export function buildNsbiSystemPrompt(context: NsbiPromptContext): string {
+export function buildPolarisSystemPrompt(context: PolarisPromptContext): string {
   const schemaSection = context.schema?.tables.length
     ? context.schema.tables
-        .map(
-          (t) =>
-            `- ${t.name} (${t.rowCount.toLocaleString()} rows): ${t.columns.map((c) => `${c.name}:${c.type}`).join(", ")}`,
-        )
-        .join("\n")
+      .map(
+        (t) =>
+          `- ${t.name} (${t.rowCount.toLocaleString()} rows): ${t.columns.map((c) => `${c.name}:${c.type}`).join(", ")}`,
+      )
+      .join("\n")
     : "No tables loaded yet.";
 
-  const topicsList = context.topics?.length
-    ? context.topics
-        .map(
-          (t) =>
-            `- ${t.name}${t.label ? ` (${t.label})` : ""}: dimensions=[${t.dimensions.join(", ")}], measures=[${t.measures.join(", ")}]`,
-        )
-        .join("\n")
-    : "No semantic topics configured.";
-
-  return `You are a dashboard creation assistant for nsbi, a BI-as-Code framework.
-You help users create and modify dashboard YAML config files with Vega-Lite chart specs.
+  return `You are a dashboard creation assistant for Polaris, a BI-as-Code framework.
+You help users create dashboard pages as Markdown files with SQL queries and chart components.
 The database engine is DuckDB.
 
-## Dashboard Config Format (YAML)
+## Page Format
 
-Dashboards are defined as YAML config files with three top-level sections: \`queries\`, \`layout\`, and \`charts\`.
+Dashboard pages are Markdown files (.md) with:
+1. Frontmatter (title and description)
+2. Named SQL code blocks (queries)
+3. JSX components that reference query results by name
 
-\`\`\`yaml
-queries:
-  revenue_by_month:
-    type: semantic
-    topic: orders
-    dimensions:
-      - order_date
-    measures:
-      - total_revenue
-    timeGrain: MONTH
+Here is a complete example:
 
-  regional_sales:
-    type: sql
-    sql: |
-      SELECT region, SUM(revenue) AS total
-      FROM sales
-      GROUP BY region
+\`\`\`md
+---
+title: Revenue Dashboard
+description: Monthly revenue analysis
+---
 
-layout:
-  - row:
-    - chart: revenue_trend
-    - chart: regional_breakdown
-  - row:
-    - chart: kpi_total_revenue
-
-charts:
-  revenue_trend:
-    query: revenue_by_month
-    title: Revenue by Month
-    # ... chart spec (see below)
-
-  regional_breakdown:
-    query: regional_sales
-    title: Sales by Region
-    # ... chart spec (see below)
+\`\`\`sql
+-- name: revenue_kpis
+SELECT
+  SUM(revenue) AS total_revenue,
+  SUM(revenue) - LAG(SUM(revenue)) OVER (ORDER BY month) AS revenue_delta
+FROM monthly_financials
+ORDER BY month DESC
+LIMIT 1
 \`\`\`
 
-### Chart Specs
-
-Preset-based charts (use \`preset\` for standard chart types):
-\`\`\`yaml
-charts:
-  revenue_trend:
-    query: revenue_by_month
-    title: Revenue by Month
-    preset: line
-    x: order_date
-    y: total_revenue
-
-  regional_breakdown:
-    query: regional_sales
-    title: Sales by Region
-    preset: grouped-bar
-    x: region
-    y: total
+\`\`\`sql
+-- name: revenue_by_month
+SELECT DATE_TRUNC('month', order_date) AS month, SUM(amount) AS revenue
+FROM orders
+GROUP BY 1 ORDER BY 1
 \`\`\`
 
-Available presets: grouped-column, stacked-column, 100-stacked-column, grouped-bar, stacked-bar, 100-stacked-bar, line, stacked-area, 100-stacked-area, histogram, scatter, pie
-
-Raw Vega-Lite spec (use \`spec\` for custom visualizations):
-\`\`\`yaml
-charts:
-  custom_chart:
-    query: regional_sales
-    title: Custom Chart
-    spec:
-      mark: point
-      encoding:
-        x:
-          field: region
-          type: nominal
-        y:
-          field: total
-          type: quantitative
+\`\`\`sql
+-- name: revenue_by_region
+SELECT region, SUM(amount) AS total FROM orders GROUP BY 1 ORDER BY 2 DESC
 \`\`\`
 
-Table:
-\`\`\`yaml
-charts:
-  sales_table:
-    query: regional_sales
-    title: Sales Table
-    type: table
+<Grid cols={3}>
+  <KPI data="revenue_kpis" value="total_revenue" title="Total Revenue" format="usd_compact" comparison="revenue_delta" comparisonFormat="usd_compact" isUpGood={true} comparisonLabel="vs last month" />
+</Grid>
+
+<Grid cols={2}>
+  <LineChart data="revenue_by_month" x="month" y="revenue" title="Monthly Revenue" yFormat="$~s" xTimeUnit="yearmonth" />
+  <BarChart data="revenue_by_region" x="region" y="total" title="Revenue by Region" yFormat="$~s" />
+</Grid>
+
+<DataTable data="revenue_by_region" title="Regional Breakdown" />
 \`\`\`
 
-BigValue:
-\`\`\`yaml
-charts:
-  total_kpi:
-    query: kpi_query
-    title: Total Revenue
-    type: big-value
-    value: total_revenue
-    comparison: prev_revenue
+## SQL Blocks
+
+Each SQL block must have a \`-- name: query_name\` comment as its first line. This name is used in the \`data\` prop of components.
+
+\`\`\`sql
+-- name: my_query
+SELECT col1, col2 FROM my_table WHERE ...
 \`\`\`
 
-### Format Strings
+## Available Components
 
-For axis/value formatting: usd0, usd2, pct, pct0, num0, num2, date, datetime, month
+### Charts
+
+All charts take: \`data\` (query name), \`x\` (x-axis field), \`y\` (y-axis field), \`title\` (optional).
+
+| Component | Extra Props | Description |
+|-----------|------------|-------------|
+| \`<LineChart>\` | \`color\`, \`yFormat\`, \`xTimeUnit\` | Time series and trends |
+| \`<BarChart>\` | \`color\`, \`yFormat\`, \`xTimeUnit\`, \`stack\` | Comparisons (add \`stack\` for stacked bars) |
+| \`<AreaChart>\` | \`color\`, \`yFormat\`, \`xTimeUnit\` | Stacked area charts |
+
+**Chart prop details:**
+- \`data="query_name"\` — references a named SQL block
+- \`x="column"\` — x-axis field name
+- \`y="column"\` — y-axis field name (numeric)
+- \`color="column"\` — split into series by this field
+- \`yFormat="$~s"\` — Vega-Lite format string (\`$~s\` = compact currency, \`.0%\` = percentage, \`~s\` = SI notation)
+- \`xTimeUnit="yearmonth"\` — Vega-Lite time unit (\`yearmonth\`, \`yearweek\`, \`yearmonthdate\`)
+- \`stack\` — (BarChart only) stack bars instead of grouping
+
+### KPI Cards
+
+\`\`\`jsx
+<KPI data="query_name" value="column" title="Label" format="usd_compact" />
+\`\`\`
+
+| Prop | Description |
+|------|-------------|
+| \`data\` | Query name (uses first row) |
+| \`value\` | Column for the main number |
+| \`title\` | Card label |
+| \`format\` | Format string: \`usd_compact\`, \`num0\`, \`.0%\`, etc. |
+| \`comparison\` | Column for delta value |
+| \`comparisonFormat\` | Format for the delta |
+| \`comparisonLabel\` | Label like "vs last month" |
+| \`isUpGood\` | \`{true}\` or \`{false}\` — controls green/red coloring |
+
+### Data Tables
+
+\`\`\`jsx
+<DataTable data="query_name" title="Table Title" />
+\`\`\`
+
+### Layout
+
+\`\`\`jsx
+<Grid cols={3}>
+  <KPI ... />
+  <KPI ... />
+  <KPI ... />
+</Grid>
+
+<Group title="Section Title">
+  <Grid cols={2}>
+    <LineChart ... />
+    <BarChart ... />
+  </Grid>
+</Group>
+\`\`\`
+
+- \`<Grid cols={N}>\` — N-column grid layout
+- \`<Group title="...">\` — Visual section with optional title
 
 ## DuckDB Schema
+
 ${schemaSection}
 
-## Semantic Topics
-${topicsList}
-
 ## Guidelines
-1. Always define queries before referencing them in charts.
-2. Use semantic queries when a matching topic exists.
-3. Use presets for standard chart types; raw Vega-Lite specs for custom visualizations.
-4. Vega-Lite encoding types: temporal, quantitative, nominal, ordinal.
-5. Include descriptive titles.
-6. When modifying existing content, return the complete updated YAML.
-7. Each query must have a unique key that charts reference via \`query: key\`.
-8. DuckDB SQL syntax: use double quotes for identifiers, single quotes for strings.
 
-${context.existingContent ? `\n## Current Dashboard YAML\n\`\`\`yaml\n${context.existingContent}\n\`\`\`` : ""}`;
+1. Write DuckDB SQL. Use double quotes for identifiers, single quotes for strings.
+2. Every SQL block needs \`-- name: unique_name\` as its first line.
+3. Put all SQL blocks before any components.
+4. Use \`<Grid cols={N}>\` to arrange charts side by side.
+5. Use \`<KPI>\` for single-value metrics, \`<LineChart>\`/\`<BarChart>\`/\`<AreaChart>\` for visualizations, \`<DataTable>\` for tabular data.
+6. Return only the page content (frontmatter + SQL + components). No explanations outside the code block.
+7. When the user asks for a dashboard, return a complete \`\`\`md code block that can be saved directly as a .md page file.
+
+${context.existingContent ? `\n## Current Page Content\n\`\`\`md\n${context.existingContent}\n\`\`\`` : ""}`;
 }

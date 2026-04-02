@@ -3,6 +3,10 @@ title: Sparkline
 description: A compact inline chart for showing trends in a small space.
 ---
 
+:::note
+Sparkline is available as a library component but is not directly usable in MDX dashboard pages. It accepts raw data arrays rather than query name strings, so it cannot be wired up to SQL queries like other dashboard components.
+:::
+
 ## Props
 
 | Prop | Type | Required | Default | Description |
@@ -15,7 +19,7 @@ description: A compact inline chart for showing trends in a small space.
 
 ## Example
 
-```mdx
+````mdx
 ```sql
 -- name: daily_active_users
 SELECT
@@ -34,4 +38,4 @@ ORDER BY activity_date
   width={140}
   color="#4f46e5"
 />
-```
+````

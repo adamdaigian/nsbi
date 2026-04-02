@@ -14,7 +14,7 @@ The filter value is `true` when checked and `false` (default) when unchecked.
 
 ## Example
 
-```mdx
+````mdx
 <CheckboxFilter name="active_only" label="Active customers only" />
 
 ```sql
@@ -26,11 +26,11 @@ ORDER BY name
 ```
 
 <DataTable data="customers" />
-```
+````
 
 ### Multiple checkboxes
 
-```mdx
+````mdx
 <Grid cols={3}>
   <CheckboxFilter name="has_orders" label="Has placed orders" />
   <CheckboxFilter name="verified" label="Email verified" />
@@ -48,4 +48,4 @@ ORDER BY signup_date DESC
 ```
 
 <DataTable data="filtered_users" />
-```
+````

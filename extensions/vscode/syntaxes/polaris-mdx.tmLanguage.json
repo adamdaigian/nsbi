@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "nsbi MDX",
-  "scopeName": "source.nsbi-mdx",
+  "name": "polaris MDX",
+  "scopeName": "source.polaris-mdx",
   "patterns": [
     { "include": "#frontmatter" },
     { "include": "#sql-block" },
@@ -39,15 +39,15 @@
           "match": "^(--\\s*name:\\s*)(.+)$",
           "captures": {
             "1": { "name": "comment.line.double-dash.sql" },
-            "2": { "name": "entity.name.function.query-name.nsbi" }
+            "2": { "name": "entity.name.function.query-name.polaris" }
           },
-          "name": "comment.line.query-directive.nsbi"
+          "name": "comment.line.query-directive.polaris"
         },
         {
           "match": "\\$\\{(\\w+)\\}",
-          "name": "variable.other.template.nsbi",
+          "name": "variable.other.template.polaris",
           "captures": {
-            "1": { "name": "variable.parameter.filter.nsbi" }
+            "1": { "name": "variable.parameter.filter.polaris" }
           }
         },
         { "include": "source.sql" }
@@ -89,9 +89,9 @@
     },
     "template-variable": {
       "match": "\\$\\{(\\w+)\\}",
-      "name": "variable.other.template.nsbi",
+      "name": "variable.other.template.polaris",
       "captures": {
-        "1": { "name": "variable.parameter.filter.nsbi" }
+        "1": { "name": "variable.parameter.filter.polaris" }
       }
     },
     "markdown": {

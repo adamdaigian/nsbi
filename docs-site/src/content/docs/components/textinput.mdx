@@ -13,7 +13,7 @@ description: A free-text input field that sets a template variable for SQL queri
 
 ## Example
 
-```mdx
+````mdx
 <TextInput name="search" label="Search" placeholder="Enter a product name..." />
 
 ```sql
@@ -26,11 +26,11 @@ LIMIT 50
 ```
 
 <DataTable data="product_search" />
-```
+````
 
 ### Combined with other filters
 
-```mdx
+````mdx
 <Grid cols={3}>
   <TextInput name="search" label="Search" placeholder="Customer name..." />
   <Dropdown name="status" options={["active", "churned", "trial"]} label="Status" />
@@ -49,4 +49,4 @@ LIMIT 100
 ```
 
 <DataTable data="customers" />
-```
+````

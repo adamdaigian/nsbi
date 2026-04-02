@@ -17,7 +17,7 @@ The current value is displayed to the right of the slider track. The initial val
 
 ## Example
 
-```mdx
+````mdx
 <Slider name="min_revenue" min={0} max={1000000} step={10000} label="Minimum Revenue" />
 
 ```sql
@@ -32,11 +32,11 @@ ORDER BY lifetime_revenue DESC
 ```
 
 <DataTable data="high_value_customers" />
-```
+````
 
 ### Combined with other inputs
 
-```mdx
+````mdx
 <Grid cols={3}>
   <Slider name="min_price" min={0} max={500} step={5} label="Min Price ($)" />
   <Slider name="max_price" min={0} max={500} step={5} label="Max Price ($)" />
@@ -54,4 +54,4 @@ ORDER BY price
 ```
 
 <DataTable data="filtered_products" />
-```
+````

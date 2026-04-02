@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const nsbiConfigSchema = z.object({
+export const polarisConfigSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
   theme: z.enum(["dark", "light"]).default("dark"),
@@ -29,4 +29,4 @@ export const nsbiConfigSchema = z.object({
     .default({ outDir: "dist" }),
 });
 
-export type NsbiConfig = z.infer<typeof nsbiConfigSchema>;
+export type PolarisConfig = z.infer<typeof polarisConfigSchema>;

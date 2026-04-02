@@ -1,14 +1,14 @@
 import fs from "fs";
 import path from "path";
-import { nsbiConfigSchema, type NsbiConfig } from "./schema";
+import { polarisConfigSchema, type PolarisConfig } from "./schema";
 
-const CONFIG_FILES = ["nsbi.config.ts", "nsbi.config.js", "nsbi.config.json"];
+const CONFIG_FILES = ["polaris.config.ts", "polaris.config.js", "polaris.config.json"];
 
 /**
- * Load nsbi config from the project root. Tries nsbi.config.{ts,js,json}
+ * Load Polaris config from the project root. Tries polaris.config.{ts,js,json}
  * in order, falls back to defaults if none found.
  */
-export async function loadConfig(projectDir: string): Promise<NsbiConfig> {
+export async function loadConfig(projectDir: string): Promise<PolarisConfig> {
   const resolved = path.resolve(projectDir);
 
   for (const filename of CONFIG_FILES) {
@@ -18,19 +18,19 @@ export async function loadConfig(projectDir: string): Promise<NsbiConfig> {
     try {
       if (filename.endsWith(".json")) {
         const raw = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        return nsbiConfigSchema.parse(raw);
+        return polarisConfigSchema.parse(raw);
       }
 
       // For .ts/.js files, use dynamic import with file:// URL
       const fileUrl = `file://${configPath}?t=${Date.now()}`;
       const mod = await import(fileUrl);
       const raw = mod.default ?? mod;
-      return nsbiConfigSchema.parse(raw);
+      return polarisConfigSchema.parse(raw);
     } catch (err) {
-      console.warn(`[nsbi] Failed to load ${filename}:`, err);
+      console.warn(`[polaris] Failed to load ${filename}:`, err);
     }
   }
 
   // No config file found — use defaults
-  return nsbiConfigSchema.parse({});
+  return polarisConfigSchema.parse({});
 }

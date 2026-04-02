@@ -1,6 +1,6 @@
 ---
 title: Netlify
-description: Deploy nsbi dashboards to Netlify
+description: Deploy Polaris dashboards to Netlify
 ---
 
 ## Setup
@@ -11,12 +11,12 @@ In **Site Settings → Build & Deploy**:
 
 | Setting | Value |
 |---------|-------|
-| Build Command | `npx nsbi build --project .` |
+| Build Command | `npx polaris build --project .` |
 | Publish Directory | `dist` |
 
 ### 2. SPA Routing
 
-nsbi generates a `_redirects` file in `dist/` during build:
+Polaris generates a `_redirects` file in `dist/` during build:
 
 ```
 /*    /index.html   200
@@ -29,6 +29,6 @@ This handles client-side routing automatically.
 Connect your Git repository to Netlify, or deploy manually:
 
 ```bash
-npx nsbi build --project .
+npx polaris build --project .
 npx netlify deploy --dir=dist --prod
 ```

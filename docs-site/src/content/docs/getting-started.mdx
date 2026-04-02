@@ -1,19 +1,19 @@
 ---
 title: Quick Start
-description: Build your first nsbi dashboard in 5 minutes
+description: Build your first Polaris dashboard in 5 minutes
 ---
 
 ## 1. Create a Project
 
 ```bash
-npx nsbi init my-dashboard --template saas-metrics
+npx polaris init my-dashboard --template saas-metrics
 cd my-dashboard
 ```
 
 ## 2. Start the Dev Server
 
 ```bash
-npx nsbi dev --project .
+npx polaris dev --project .
 ```
 
 Open [http://localhost:3000](http://localhost:3000). You should see a SaaS metrics dashboard with KPIs, charts, and tables.
@@ -22,7 +22,7 @@ Open [http://localhost:3000](http://localhost:3000). You should see a SaaS metri
 
 Open `pages/index.mdx` in your editor. You'll see:
 
-```mdx
+````mdx
 ---
 title: SaaS Overview
 description: Key business metrics
@@ -34,7 +34,7 @@ SELECT COUNT(*) as total_users FROM users
 ```
 
 <BigValue data="kpis" value="total_users" title="Total Users" />
-```
+````
 
 ### How it works:
 
@@ -46,7 +46,7 @@ SELECT COUNT(*) as total_users FROM users
 
 Add this below the existing content:
 
-```mdx
+````mdx
 ```sql
 -- name: monthly_trend
 SELECT DATE_TRUNC('month', created_at) as month, COUNT(*) as signups
@@ -54,7 +54,7 @@ FROM users GROUP BY 1 ORDER BY 1
 ```
 
 <LineChart data="monthly_trend" x="month" y="signups" xTimeUnit="yearmonth" title="Monthly Signups" />
-```
+````
 
 Save the file — the dashboard updates instantly via hot reload.
 
@@ -62,7 +62,7 @@ Save the file — the dashboard updates instantly via hot reload.
 
 Make queries interactive with template variables:
 
-```mdx
+````mdx
 <Dropdown name="plan" options={["free", "starter", "pro"]} defaultValue="free" label="Plan" />
 
 ```sql
@@ -71,13 +71,13 @@ SELECT * FROM users WHERE plan = ${plan}
 ```
 
 <DataTable data="filtered_users" />
-```
+````
 
 ## 6. Build and Deploy
 
 ```bash
-npx nsbi build --project .
-npx nsbi preview
+npx polaris build --project .
+npx polaris preview
 ```
 
 Your dashboard is now a static site at `dist/` — deploy it anywhere.

@@ -4,7 +4,30 @@ import { loadConfig } from "@/config/load-config";
 import fs from "fs";
 import path from "path";
 
-const cli = cac("nsbi");
+// Load .env file from current directory if it exists
+function loadEnvFile() {
+  const envPath = path.resolve(".env");
+  if (!fs.existsSync(envPath)) return;
+  const content = fs.readFileSync(envPath, "utf-8");
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIndex = trimmed.indexOf("=");
+    if (eqIndex === -1) continue;
+    const key = trimmed.slice(0, eqIndex).trim();
+    let value = trimmed.slice(eqIndex + 1).trim();
+    // Strip surrounding quotes
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+}
+loadEnvFile();
+
+const cli = cac("polaris");
 
 cli
   .command("dev", "Start the development server")
@@ -22,7 +45,7 @@ cli
   });
 
 cli
-  .command("init [name]", "Create a new nsbi project")
+  .command("init [name]", "Create a new Polaris project")
   .option("--template <name>", "Template to use (blank, saas-metrics, sales-pipeline, product-analytics)", { default: "blank" })
   .action(async (name: string | undefined, options: { template: string }) => {
     const projectName = name ?? "my-dashboard";
@@ -30,7 +53,7 @@ cli
     const templateName = options.template;
 
     if (fs.existsSync(projectDir)) {
-      console.error(`[nsbi] Directory already exists: ${projectName}`);
+      console.error(`[polaris] Directory already exists: ${projectName}`);
       process.exit(1);
     }
 
@@ -42,7 +65,7 @@ cli
       const available = fs.readdirSync(templatesRoot).filter((d) =>
         fs.statSync(path.join(templatesRoot, d)).isDirectory(),
       );
-      console.error(`[nsbi] Unknown template: ${templateName}`);
+      console.error(`[polaris] Unknown template: ${templateName}`);
       console.error(`  Available: ${available.join(", ")}`);
       process.exit(1);
     }
@@ -56,7 +79,7 @@ cli
     // Run data generator if it exists
     const generatorScript = path.join(templateDir, "scripts", "generate-data.ts");
     if (fs.existsSync(generatorScript)) {
-      console.log(`  [nsbi] Generating sample data...`);
+      console.log(`  [polaris] Generating sample data...`);
       const { execSync } = await import("child_process");
       try {
         execSync(`npx tsx "${generatorScript}"`, {
@@ -65,14 +88,14 @@ cli
           env: { ...process.env },
         });
       } catch {
-        console.warn("  [nsbi] Data generation failed — you can run it manually from scripts/");
+        console.warn("  [polaris] Data generation failed — you can run it manually from scripts/");
       }
     }
 
-    console.log(`\n  [nsbi] Created project: ${projectName}/ (template: ${templateName})`);
+    console.log(`\n  [polaris] Created project: ${projectName}/ (template: ${templateName})`);
     console.log(`\n  Next steps:`);
     console.log(`    cd ${projectName}`);
-    console.log(`    npx nsbi dev --project .\n`);
+    console.log(`    npx polaris dev --project .\n`);
   });
 
 cli
@@ -85,11 +108,11 @@ cli
     const dataDir = path.join(projectDir, config.data.dir);
 
     if (!fs.existsSync(pagesDir)) {
-      console.error(`[nsbi] No pages/ directory found in ${projectDir}`);
+      console.error(`[polaris] No pages/ directory found in ${projectDir}`);
       process.exit(1);
     }
 
-    console.log("[nsbi] Building for production...");
+    console.log("[polaris] Building for production...");
 
     // 1. Initialize DuckDB and pre-execute all queries
     const { initDuckDB, executeQuery } = await import("@/engine/duckdb");
@@ -107,7 +130,7 @@ cli
 
     const outDir = path.resolve(config.build.outDir);
 
-    // 2. Scan all .mdx files, categorize queries, pre-execute static ones
+    // 2. Scan all page files (.md, .mdx, .yaml), categorize queries, pre-execute static ones
     const mdxFiles = scanMdxFiles(pagesDir);
     let hasFilteredQueries = false;
 
@@ -121,7 +144,8 @@ cli
     for (const file of mdxFiles) {
       const content = fs.readFileSync(file, "utf-8");
       const parsed = parseDocument(content);
-      const pagePath = path.relative(pagesDir, file).replace(/\.mdx$/, "").replace(/\\/g, "/");
+      const ext = path.extname(file);
+      const pagePath = path.relative(pagesDir, file).replace(new RegExp(`\\${ext}$`), "").replace(/\\/g, "/");
 
       const staticQueries = parsed.queries.filter((q) =>
         q.type === "semantic" || !(q as { filterVariables?: string[] }).filterVariables?.length,
@@ -139,7 +163,7 @@ cli
         try {
           if (query.type === "semantic") {
             if (!semanticModel) {
-              console.warn(`[nsbi] Semantic query "${query.name}" in ${pagePath} skipped: no semantic model`);
+              console.warn(`[polaris] Semantic query "${query.name}" in ${pagePath} skipped: no semantic model`);
               queryResults[query.name] = { rows: [], columns: [] };
               continue;
             }
@@ -159,7 +183,7 @@ cli
             queryResults[query.name] = await executeQuery((query as { sql: string }).sql);
           }
         } catch (err) {
-          console.warn(`[nsbi] Query "${query.name}" in ${pagePath} failed:`, err);
+          console.warn(`[polaris] Query "${query.name}" in ${pagePath} failed:`, err);
           queryResults[query.name] = { rows: [], columns: [] };
         }
       }
@@ -170,12 +194,12 @@ cli
         staticCount: staticQueries.length,
         filteredCount: filteredQueriesOnPage.length,
       });
-      console.log(`  [nsbi] Pre-rendered: ${pagePath} (${staticQueries.length} static, ${filteredQueriesOnPage.length} filtered)`);
+      console.log(`  [polaris] Pre-rendered: ${pagePath} (${staticQueries.length} static, ${filteredQueriesOnPage.length} filtered)`);
     }
 
     // 3. If any page has filters, prepare data files for WASM engine
     if (hasFilteredQueries && fs.existsSync(dataDir)) {
-      console.log("  [nsbi] Preparing data files for WASM engine...");
+      console.log("  [polaris] Preparing data files for WASM engine...");
       const dataFiles = fs.readdirSync(dataDir);
       for (const file of dataFiles) {
         const ext = path.extname(file).toLowerCase();
@@ -191,31 +215,31 @@ cli
 
     // 4. Run Vite build (this empties the output directory)
     const { build } = await import("vite");
-    const nsbiRoot = path.resolve(import.meta.dirname, "..");
+    const polarisRoot = path.resolve(import.meta.dirname, "..");
 
     await build({
-      root: nsbiRoot,
+      root: polarisRoot,
       base: config.basePath,
       build: { outDir },
       define: {
-        __NSBI_STATIC__: "true",
-        __NSBI_HAS_WASM__: hasFilteredQueries ? "true" : "false",
+        __POLARIS_STATIC__: "true",
+        __POLARIS_HAS_WASM__: hasFilteredQueries ? "true" : "false",
       },
     });
 
     // 5. Write pre-rendered data AFTER vite build (so it doesn't get deleted)
-    const nsbiDataDir = path.join(outDir, "_nsbi_data");
-    fs.mkdirSync(nsbiDataDir, { recursive: true });
+    const polarisDataDir = path.join(outDir, "_polaris_data");
+    fs.mkdirSync(polarisDataDir, { recursive: true });
 
     // Write page tree
     fs.writeFileSync(
-      path.join(nsbiDataDir, "pages.json"),
+      path.join(polarisDataDir, "pages.json"),
       JSON.stringify({ pages: pageTree }),
     );
 
     // Write per-page JSON files
     for (const { pagePath, pageData } of collectedPages) {
-      const pageJsonPath = path.join(nsbiDataDir, `${pagePath}.json`);
+      const pageJsonPath = path.join(polarisDataDir, `${pagePath}.json`);
       fs.mkdirSync(path.dirname(pageJsonPath), { recursive: true });
       fs.writeFileSync(pageJsonPath, JSON.stringify(pageData));
     }
@@ -224,10 +248,10 @@ cli
     if (dataFilesToCopy.length > 0) {
       const manifest = { files: dataFilesToCopy.map(({ name, type }) => ({ name, type })) };
       for (const { src, name } of dataFilesToCopy) {
-        fs.copyFileSync(src, path.join(nsbiDataDir, name));
+        fs.copyFileSync(src, path.join(polarisDataDir, name));
       }
       fs.writeFileSync(
-        path.join(nsbiDataDir, "manifest.json"),
+        path.join(polarisDataDir, "manifest.json"),
         JSON.stringify(manifest),
       );
     }
@@ -253,7 +277,7 @@ cli
     const bundleNote = hasFilteredQueries
       ? "(includes WASM for filtered queries)"
       : "(static only, no WASM needed)";
-    console.log(`\n  [nsbi] Build complete → ${config.build.outDir}/ ${bundleNote}\n`);
+    console.log(`\n  [polaris] Build complete → ${config.build.outDir}/ ${bundleNote}\n`);
   });
 
 cli
@@ -263,15 +287,15 @@ cli
     const distDir = path.resolve("dist");
 
     if (!fs.existsSync(distDir)) {
-      console.error("[nsbi] No dist/ directory found. Run `nsbi build` first.");
+      console.error("[polaris] No dist/ directory found. Run `polaris build` first.");
       process.exit(1);
     }
 
     const { preview } = await import("vite");
-    const nsbiRoot = path.resolve(import.meta.dirname, "..");
+    const polarisRoot = path.resolve(import.meta.dirname, "..");
 
     const server = await preview({
-      root: nsbiRoot,
+      root: polarisRoot,
       preview: { port: Number(options.port) },
       build: { outDir: distDir },
     });
@@ -284,7 +308,7 @@ cli.version("0.1.0");
 cli.parse();
 
 /**
- * Recursively scan a directory for .mdx files and build a page tree (for sidebar).
+ * Recursively scan a directory for page files and build a page tree (for sidebar).
  */
 interface PageTreeNode {
   name: string;
@@ -312,12 +336,15 @@ function scanPageTree(dir: string, rootDir: string): PageTreeNode[] {
           children,
         });
       }
-    } else if (entry.name.endsWith(".mdx")) {
+    } else if (entry.name.endsWith(".mdx") || entry.name.endsWith(".md") || entry.name.endsWith(".yaml")) {
+      const ext = path.extname(entry.name);
       const relativePath = path
         .relative(rootDir, fullPath)
-        .replace(/\.mdx$/, "")
+        .replace(new RegExp(`\\${ext}$`), "")
         .replace(/\\/g, "/");
-      nodes.push({ name: path.basename(entry.name, ".mdx"), path: relativePath });
+      if (!nodes.some((n) => n.path === relativePath)) {
+        nodes.push({ name: path.basename(entry.name, ext), path: relativePath });
+      }
     }
   }
 
@@ -332,7 +359,7 @@ function scanPageTree(dir: string, rootDir: string): PageTreeNode[] {
 }
 
 /**
- * Recursively scan for .mdx files.
+ * Recursively scan for page files (.md, .mdx, .yaml).
  */
 function scanMdxFiles(dir: string): string[] {
   const files: string[] = [];
@@ -343,7 +370,7 @@ function scanMdxFiles(dir: string): string[] {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...scanMdxFiles(full));
-    } else if (entry.name.endsWith(".mdx")) {
+    } else if (entry.name.endsWith(".mdx") || entry.name.endsWith(".md") || entry.name.endsWith(".yaml")) {
       files.push(full);
     }
   }

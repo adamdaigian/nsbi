@@ -4,7 +4,7 @@ import type { ComponentType } from "react";
  * Compile and evaluate MDX content into a React component.
  *
  * Passes the provided component map so that <LineChart>, <BarChart>, etc.
- * resolve to the nsbi viz components at render time.
+ * resolve to the Polaris viz components at render time.
  *
  * Uses dynamic import of @mdx-js/mdx because it's an ESM-only package.
  */

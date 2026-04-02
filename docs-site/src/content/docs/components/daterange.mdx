@@ -14,7 +14,7 @@ The component includes built-in presets: Last 7 days, Last 30 days, This month, 
 
 ## Example
 
-```mdx
+````mdx
 <DateRange name="date_range" label="Date Range" />
 
 ```sql
@@ -38,11 +38,11 @@ ORDER BY 1
   yFmt="$#,##0"
   title="Revenue Over Time"
 />
-```
+````
 
 ### Combined with other filters
 
-```mdx
+````mdx
 <Grid cols={3}>
   <DateRange name="period" label="Period" />
   <Dropdown name="channel" options={["online", "retail", "wholesale"]} label="Channel" />
@@ -62,4 +62,4 @@ ORDER BY total DESC
 ```
 
 <BarChart data="sales_filtered" x="product" y="total" title="Sales by Product" />
-```
+````

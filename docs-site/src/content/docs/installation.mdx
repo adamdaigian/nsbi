@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Get nsbi up and running in minutes
+description: Get Polaris up and running in minutes
 ---
 
 ## Prerequisites
@@ -11,32 +11,32 @@ description: Get nsbi up and running in minutes
 ## Create a New Project
 
 ```bash
-npx nsbi init my-dashboard
+npx polaris init my-dashboard
 cd my-dashboard
 ```
 
 ### With a Template
 
-nsbi ships with starter templates to get you going faster:
+Polaris ships with starter templates to get you going faster:
 
 ```bash
 # Blank project
-npx nsbi init my-dashboard --template blank
+npx polaris init my-dashboard --template blank
 
 # SaaS metrics dashboard (with sample data)
-npx nsbi init my-dashboard --template saas-metrics
+npx polaris init my-dashboard --template saas-metrics
 
 # Sales pipeline dashboard
-npx nsbi init my-dashboard --template sales-pipeline
+npx polaris init my-dashboard --template sales-pipeline
 
 # Product analytics dashboard
-npx nsbi init my-dashboard --template product-analytics
+npx polaris init my-dashboard --template product-analytics
 ```
 
 ## Start the Dev Server
 
 ```bash
-npx nsbi dev --project .
+npx polaris dev --project .
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see your dashboard.
@@ -48,7 +48,7 @@ my-dashboard/
 ├── pages/           # MDX dashboard files
 │   └── index.mdx    # Main dashboard page
 ├── data/            # CSV, Parquet, or DuckDB files
-├── nsbi.config.ts   # Project configuration
+├── polaris.config.ts   # Project configuration
 ```
 
 ## Add Your Data
@@ -62,7 +62,7 @@ Drop `.csv`, `.parquet`, or `.db` files into the `data/` directory. They're auto
 ## Build for Production
 
 ```bash
-npx nsbi build --project .
+npx polaris build --project .
 ```
 
 This pre-executes all queries, bundles the site, and outputs to `dist/`. Deploy anywhere — no server required.

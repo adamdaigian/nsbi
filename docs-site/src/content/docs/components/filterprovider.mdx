@@ -5,7 +5,7 @@ description: Context provider that manages filter state for all input components
 
 `FilterProvider` is a React context provider that holds the current filter values and exposes an `onChange` callback. All input components (`Dropdown`, `TextInput`, `Slider`, etc.) read from and write to this context.
 
-**You typically do not need to use `FilterProvider` directly.** nsbi automatically wraps each page in a `FilterProvider` so that filter inputs and SQL template variables work out of the box.
+**You typically do not need to use `FilterProvider` directly.** Polaris automatically wraps each page in a `FilterProvider` so that filter inputs and SQL template variables work out of the box.
 
 ## Props
 
@@ -33,9 +33,9 @@ In the rare case you need explicit control over filter state, you can use `Filte
 </FilterProvider>
 ```
 
-For normal dashboards, simply place filter inputs anywhere on the page. nsbi handles the context automatically:
+For normal dashboards, simply place filter inputs anywhere on the page. Polaris handles the context automatically:
 
-```mdx
+````mdx
 <Dropdown name="plan" options={["free", "starter", "pro"]} label="Plan" />
 
 ```sql
@@ -44,4 +44,4 @@ SELECT * FROM users WHERE plan = '${plan}'
 ```
 
 <DataTable data="users" />
-```
+````

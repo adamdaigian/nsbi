@@ -8,19 +8,22 @@ description: A multi-select dropdown with checkboxes for selecting multiple valu
 | Prop | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | name | string | Yes | — | Filter variable name. The value is an array of selected strings. Use `${name}` in SQL (expands to a comma-separated list for `IN` clauses). |
-| data | string | No | — | Name of a SQL query whose results populate the options. The query should return `label` and `value` columns. |
 | label | string | No | — | Label displayed above the multi-select. |
 
 Selected items appear as removable tags below the input. The dropdown shows checkboxes for each option and displays a count when more than two items are selected.
 
 ## Example
 
-### Static options
-
-```mdx
+````mdx
 <MultiSelect
   name="categories"
-  options={["Electronics", "Clothing", "Home", "Sports", "Books"]}
+  options={[
+    { label: "Electronics", value: "electronics" },
+    { label: "Clothing", value: "clothing" },
+    { label: "Home", value: "home" },
+    { label: "Sports", value: "sports" },
+    { label: "Books", value: "books" }
+  ]}
   label="Categories"
 />
 
@@ -33,26 +36,4 @@ ORDER BY units_sold DESC
 ```
 
 <DataTable data="products_by_category" />
-```
-
-### Query-driven options
-
-```mdx
-```sql
--- name: available_regions
-SELECT DISTINCT region AS label, region AS value FROM stores ORDER BY region
-```
-
-<MultiSelect name="regions" data="available_regions" label="Regions" />
-
-```sql
--- name: regional_sales
-SELECT region, SUM(amount) AS total_sales
-FROM sales
-WHERE region IN (${regions})
-GROUP BY region
-ORDER BY total_sales DESC
-```
-
-<BarChart data="regional_sales" x="region" y="total_sales" title="Sales by Region" />
-```
+````

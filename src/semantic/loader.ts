@@ -42,7 +42,7 @@ export function loadSemanticModel(modelsDir: string): SemanticModel {
 
     const parsed = yamlViewSchema.safeParse(raw);
     if (!parsed.success) {
-      console.warn(`[nsbi] Invalid view file ${file}:`, parsed.error.issues.map((i) => i.message).join(", "));
+      console.warn(`[polaris] Invalid view file ${file}:`, parsed.error.issues.map((i) => i.message).join(", "));
       continue;
     }
 
@@ -100,7 +100,7 @@ export function loadSemanticModel(modelsDir: string): SemanticModel {
         const fromView = views.get(r.from);
         const toView = views.get(r.to);
         if (!fromView || !toView) {
-          console.warn(`[nsbi] Relationship "${r.name}": view "${!fromView ? r.from : r.to}" not found`);
+          console.warn(`[polaris] Relationship "${r.name}": view "${!fromView ? r.from : r.to}" not found`);
           continue;
         }
 
@@ -118,7 +118,7 @@ export function loadSemanticModel(modelsDir: string): SemanticModel {
         });
       }
     } else {
-      console.warn(`[nsbi] Invalid _relationships.yml:`, parsed.error.issues.map((i) => i.message).join(", "));
+      console.warn(`[polaris] Invalid _relationships.yml:`, parsed.error.issues.map((i) => i.message).join(", "));
     }
   }
 
@@ -133,7 +133,7 @@ export function loadSemanticModel(modelsDir: string): SemanticModel {
       for (const t of parsed.data.topics) {
         const baseView = views.get(t.baseView);
         if (!baseView) {
-          console.warn(`[nsbi] Topic "${t.name}": base view "${t.baseView}" not found`);
+          console.warn(`[polaris] Topic "${t.name}": base view "${t.baseView}" not found`);
           continue;
         }
 
@@ -165,10 +165,10 @@ export function loadSemanticModel(modelsDir: string): SemanticModel {
         });
       }
     } else {
-      console.warn(`[nsbi] Invalid _topics.yml:`, parsed.error.issues.map((i) => i.message).join(", "));
+      console.warn(`[polaris] Invalid _topics.yml:`, parsed.error.issues.map((i) => i.message).join(", "));
     }
   }
 
-  console.log(`[nsbi] Loaded semantic model: ${views.size} views, ${relationships.length} relationships, ${topics.size} topics`);
+  console.log(`[polaris] Loaded semantic model: ${views.size} views, ${relationships.length} relationships, ${topics.size} topics`);
   return { views, relationships, topics };
 }

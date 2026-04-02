@@ -32,7 +32,7 @@ function openDatabase(dbPath: string): Promise<duckdb.Database> {
  */
 export async function initDuckDB(dataDir: string): Promise<void> {
   if (!fs.existsSync(dataDir)) {
-    console.warn(`[nsbi] Data directory not found: ${dataDir}`);
+    console.warn(`[polaris] Data directory not found: ${dataDir}`);
     db = await openDatabase(":memory:");
     conn = new duckdb.Connection(db);
     return;
@@ -50,7 +50,7 @@ export async function initDuckDB(dataDir: string): Promise<void> {
     // List tables already in the .db file
     const tables = await queryRows("SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'");
     const tableNames = tables.map((r) => r.table_name as string);
-    console.log(`[nsbi] Opened ${dbFile} (tables: ${tableNames.join(", ")})`);
+    console.log(`[polaris] Opened ${dbFile} (tables: ${tableNames.join(", ")})`);
   } else {
     db = await openDatabase(":memory:");
     conn = new duckdb.Connection(db);
@@ -66,12 +66,12 @@ export async function initDuckDB(dataDir: string): Promise<void> {
       await runQuery(
         `CREATE OR REPLACE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_csv_auto(${escapeLiteral(filePath)})`,
       );
-      console.log(`[nsbi] Registered table "${tableName}" from ${file}`);
+      console.log(`[polaris] Registered table "${tableName}" from ${file}`);
     } else if (ext === ".parquet") {
       await runQuery(
         `CREATE OR REPLACE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_parquet(${escapeLiteral(filePath)})`,
       );
-      console.log(`[nsbi] Registered table "${tableName}" from ${file}`);
+      console.log(`[polaris] Registered table "${tableName}" from ${file}`);
     }
   }
 }
@@ -151,13 +151,13 @@ export async function reRegisterTable(filePath: string): Promise<void> {
     await runQuery(
       `CREATE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_csv_auto(${escapeLiteral(resolved)})`,
     );
-    console.log(`[nsbi] Re-registered table "${tableName}" from ${path.basename(filePath)}`);
+    console.log(`[polaris] Re-registered table "${tableName}" from ${path.basename(filePath)}`);
   } else if (ext === ".parquet") {
     await runQuery(`DROP TABLE IF EXISTS ${escapeIdent(tableName)}`);
     await runQuery(
       `CREATE TABLE ${escapeIdent(tableName)} AS SELECT * FROM read_parquet(${escapeLiteral(resolved)})`,
     );
-    console.log(`[nsbi] Re-registered table "${tableName}" from ${path.basename(filePath)}`);
+    console.log(`[polaris] Re-registered table "${tableName}" from ${path.basename(filePath)}`);
   }
 }
 

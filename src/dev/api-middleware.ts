@@ -12,7 +12,7 @@ export interface PageNode {
 
 import type { SemanticModel, SemanticQuery } from "@/semantic/types";
 import { compile } from "@/semantic/compiler/index";
-import { buildNsbiSystemPrompt } from "@/ai/prompts";
+import { buildPolarisSystemPrompt } from "@/ai/prompts";
 import { semanticQueryApiSchema } from "@/semantic/types";
 import { streamChatCompletion, type ChatMessage } from "@/ai/client";
 
@@ -66,7 +66,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
       res.json(result);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[nsbi] Query error:", message);
+      console.error("[polaris] Query error:", message);
       res.status(500).json({ error: message });
     }
   });
@@ -117,7 +117,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
       res.json(schema);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[nsbi] Schema introspection error:", message);
+      console.error("[polaris] Schema introspection error:", message);
       res.status(500).json({ error: message });
     }
   });
@@ -150,7 +150,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[nsbi] Semantic query error:", message);
+      console.error("[polaris] Semantic query error:", message);
       res.status(500).json({ error: message });
     }
   });
@@ -230,7 +230,63 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
       res.status(404).json({ error: `Page not found: ${pagePath}` });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[nsbi] Page read error:", message);
+      console.error("[polaris] Page read error:", message);
+      res.status(500).json({ error: message });
+    }
+  });
+
+  /**
+   * POST /api/page — Save page content to disk.
+   * Body: { path: string, content: string }
+   * Returns: { ok: true, path: "relative/path" }
+   */
+  router.post("/api/page", (req: Request, res: Response) => {
+    try {
+      const { path: pagePath, content } = req.body as { path?: string; content?: string };
+
+      if (!pagePath || content == null) {
+        res.status(400).json({ error: "Missing 'path' or 'content' in request body" });
+        return;
+      }
+
+      // Prevent path traversal — ensure resolved path stays within pagesDir
+      const resolvedBase = path.resolve(pagesDir);
+      const resolvedPage = path.resolve(pagesDir, pagePath);
+      if (!resolvedPage.startsWith(resolvedBase + path.sep) && resolvedPage !== resolvedBase) {
+        res.status(400).json({ error: "Invalid page path" });
+        return;
+      }
+
+      // Determine which file to write: check if .yaml, .mdx, or .md already exists
+      const yamlPath = `${resolvedPage}.yaml`;
+      const mdxPath = `${resolvedPage}.mdx`;
+      const mdPath = `${resolvedPage}.md`;
+
+      let targetPath: string;
+      if (fs.existsSync(yamlPath)) {
+        targetPath = yamlPath;
+      } else if (fs.existsSync(mdxPath)) {
+        targetPath = mdxPath;
+      } else if (fs.existsSync(mdPath)) {
+        targetPath = mdPath;
+      } else {
+        // Default to .md for new files
+        targetPath = mdPath;
+      }
+
+      // Create parent directories if needed
+      const parentDir = path.dirname(targetPath);
+      if (!fs.existsSync(parentDir)) {
+        fs.mkdirSync(parentDir, { recursive: true });
+      }
+
+      fs.writeFileSync(targetPath, content, "utf-8");
+      console.log(`[polaris] Saved page: ${pagePath}`);
+
+      res.json({ ok: true, path: pagePath });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[polaris] Page save error:", message);
       res.status(500).json({ error: message });
     }
   });
@@ -239,14 +295,14 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
    * POST /api/ai/generate — SSE endpoint for AI-assisted MDX generation.
    */
   router.post("/api/ai/generate", async (req: Request, res: Response) => {
-    const apiKey = options?.aiConfig?.apiKey || process.env.NSBI_AI_API_KEY;
+    const apiKey = options?.aiConfig?.apiKey || process.env.POLARIS_AI_API_KEY;
     if (!apiKey) {
-      res.status(400).json({ error: "No AI API key configured. Set NSBI_AI_API_KEY or ai.apiKey in config." });
+      res.status(400).json({ error: "No AI API key configured. Set POLARIS_AI_API_KEY or ai.apiKey in config." });
       return;
     }
 
     try {
-      const { messages } = req.body as { messages: ChatMessage[] };
+      const { messages, pageContent } = req.body as { messages: ChatMessage[]; pageContent?: string };
 
       // Build schema context for the prompt
       let schemaContext;
@@ -291,7 +347,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
           })
         : undefined;
 
-      const systemPrompt = buildNsbiSystemPrompt({ schema: schemaContext, topics });
+      const systemPrompt = buildPolarisSystemPrompt({ schema: schemaContext, topics, existingContent: pageContent });
 
       // Set SSE headers
       res.setHeader("Content-Type", "text/event-stream");
@@ -313,7 +369,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
       res.end();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[nsbi] AI generation error:", message);
+      console.error("[polaris] AI generation error:", message);
       // If headers not sent yet, send JSON error
       if (!res.headersSent) {
         res.status(500).json({ error: message });
@@ -333,7 +389,7 @@ export function createApiRouter(pagesDir: string, options?: ApiRouterOptions): R
       res.json({ pages });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[nsbi] Pages scan error:", message);
+      console.error("[polaris] Pages scan error:", message);
       res.status(500).json({ error: message });
     }
   });

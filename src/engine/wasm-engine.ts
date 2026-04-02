@@ -18,7 +18,7 @@ function escapeLiteral(value: string): string {
 
 /**
  * Production query engine — runs DuckDB WASM in the browser.
- * Loads data files from /_nsbi_data/ based on a manifest.
+ * Loads data files from /_polaris_data/ based on a manifest.
  */
 export class WasmQueryEngine implements QueryEngine {
   private db: duckdb.AsyncDuckDB | null = null;
@@ -61,12 +61,12 @@ export class WasmQueryEngine implements QueryEngine {
 
   private async loadDataFiles(): Promise<void> {
     try {
-      const res = await fetch("/_nsbi_data/manifest.json");
+      const res = await fetch("/_polaris_data/manifest.json");
       if (!res.ok) return;
       const manifest = (await res.json()) as DataManifest;
 
       for (const file of manifest.files) {
-        const fileUrl = `/_nsbi_data/${file.name}`;
+        const fileUrl = `/_polaris_data/${file.name}`;
         const response = await fetch(fileUrl);
         if (!response.ok) continue;
 
@@ -103,7 +103,7 @@ export class WasmQueryEngine implements QueryEngine {
         }
       }
     } catch (err) {
-      console.warn("[nsbi] Failed to load data manifest:", err);
+      console.warn("[polaris] Failed to load data manifest:", err);
     }
   }
 

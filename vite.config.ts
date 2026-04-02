@@ -10,8 +10,8 @@ export default defineConfig(({ command }) => ({
     },
   },
   // Base path can be overridden at build time via --base flag or
-  // define: { __NSBI_BASE_PATH__: '"/repo-name/"' } from the build command
-  base: process.env.NSBI_BASE_PATH || "/",
+  // define: { __POLARIS_BASE_PATH__: '"/repo-name/"' } from the build command
+  base: process.env.POLARIS_BASE_PATH || "/",
   optimizeDeps: {
     exclude: command === "build" ? ["@duckdb/duckdb-wasm"] : [],
   },

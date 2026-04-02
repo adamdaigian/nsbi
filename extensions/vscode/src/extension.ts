@@ -5,7 +5,7 @@ import { ComponentCompletionProvider } from "./completion/component-provider";
 export function activate(context: vscode.ExtensionContext) {
   // Register preview command
   context.subscriptions.push(
-    vscode.commands.registerCommand("nsbi.openPreview", () => {
+    vscode.commands.registerCommand("polaris.openPreview", () => {
       PreviewPanel.createOrShow(context.extensionUri);
     }),
   );
@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
   const completionProvider = new ComponentCompletionProvider();
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(
-      { language: "nsbi-mdx" },
+      { language: "polaris-mdx" },
       completionProvider,
       "<", " ",
     ),
@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Auto-refresh preview on save
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
-      if (doc.languageId === "nsbi-mdx") {
+      if (doc.languageId === "polaris-mdx") {
         PreviewPanel.refresh();
       }
     }),

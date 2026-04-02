@@ -35,3 +35,6 @@ npm-debug.log*
 
 .gstack/
 .superpowers/
+claude-agent-sdk-demos
+docs-site/.astro/
+docs-site/dist/

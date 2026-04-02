@@ -18,7 +18,7 @@ description: A bar chart for comparing values across categories.
 
 ## Example
 
-```mdx
+````mdx
 ```sql
 -- name: sales_by_region
 SELECT region, sales_channel, SUM(amount) AS total_sales
@@ -37,12 +37,12 @@ ORDER BY total_sales DESC
   yFormat="$~s"
   title="Sales by Region"
 />
-```
+````
 
 ### Grouped bars
 
 Omit `stack` to show bars side by side:
 
-```mdx
+```jsx
 <BarChart data="sales_by_region" x="region" y="total_sales" color="sales_channel" title="Sales by Region" />
 ```

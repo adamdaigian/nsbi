@@ -2,12 +2,14 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
 export default defineConfig({
+  base: "/docs",
   integrations: [
     starlight({
-      title: "nsbi",
-      description: "BI as Code — write MDX, query SQL, see dashboards",
+      title: "Polaris",
+      description: "Polaris — BI as Code. Write MDX, query SQL, see dashboards.",
+      customCss: ["./src/styles/polaris-theme.css"],
       social: {
-        github: "https://github.com/nsbi/nsbi",
+        github: "https://github.com/polaris/polaris",
       },
       sidebar: [
         {

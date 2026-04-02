@@ -8,7 +8,7 @@ description: A segmented button group for selecting one option from a small set 
 | Prop | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | name | string | Yes | — | Filter variable name. Use `${name}` in SQL to reference the selected value. |
-| options | string[] | Yes | — | List of options. Each string is used as both the label and value. |
+| options | `{ label: string; value: string }[]` | Yes | — | List of options. Each object has a `label` (displayed) and `value` (used in SQL). |
 | label | string | No | — | Label displayed above the button group. |
 | defaultValue | string | No | — | Initial selected value. |
 
@@ -16,10 +16,14 @@ description: A segmented button group for selecting one option from a small set 
 
 ## Example
 
-```mdx
+````mdx
 <ButtonGroup
   name="time_grain"
-  options={["day", "week", "month"]}
+  options={[
+    { label: "Day", value: "day" },
+    { label: "Week", value: "week" },
+    { label: "Month", value: "month" }
+  ]}
   defaultValue="week"
   label="Time Grain"
 />
@@ -41,14 +45,14 @@ ORDER BY 1
   yFmt="$#,##0"
   title="Revenue Trend"
 />
-```
+````
 
 ### Multiple button groups
 
-```mdx
+````mdx
 <Grid cols={2}>
-  <ButtonGroup name="metric" options={["revenue", "orders", "users"]} defaultValue="revenue" label="Metric" />
-  <ButtonGroup name="time_grain" options={["day", "week", "month"]} defaultValue="month" label="Time Grain" />
+  <ButtonGroup name="metric" options={[{ label: "Revenue", value: "revenue" }, { label: "Orders", value: "orders" }, { label: "Users", value: "users" }]} defaultValue="revenue" label="Metric" />
+  <ButtonGroup name="time_grain" options={[{ label: "Day", value: "day" }, { label: "Week", value: "week" }, { label: "Month", value: "month" }]} defaultValue="month" label="Time Grain" />
 </Grid>
 
 ```sql
@@ -62,4 +66,4 @@ ORDER BY 1
 ```
 
 <LineChart data="trend" x="period" y="value" title="Trend" />
-```
+````

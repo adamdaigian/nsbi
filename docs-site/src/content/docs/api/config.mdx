@@ -1,15 +1,15 @@
 ---
 title: Configuration
-description: nsbi.config.ts reference
+description: polaris.config.ts reference
 ---
 
 ## Config File
 
-nsbi looks for configuration in the project root, in this order:
+Polaris looks for configuration in the project root, in this order:
 
-1. `nsbi.config.ts`
-2. `nsbi.config.js`
-3. `nsbi.config.json`
+1. `polaris.config.ts`
+2. `polaris.config.js`
+3. `polaris.config.json`
 
 ## Schema
 
@@ -36,6 +36,18 @@ export default {
   build: {
     outDir: "dist", // Output directory for production build
   },
+
+  // Semantic model directory
+  models: {
+    dir: "models", // Relative to project root
+  },
+
+  // AI settings
+  ai: {
+    provider: "anthropic",
+    apiKey: undefined, // Or set POLARIS_AI_API_KEY env var
+    model: "claude-sonnet-4-20250514",
+  },
 };
 ```
 
@@ -49,3 +61,7 @@ export default {
 | `basePath` | `string` | `"/"` | URL base path (for subpath deploys) |
 | `data.dir` | `string` | `"data"` | Data files directory |
 | `build.outDir` | `string` | `"dist"` | Build output directory |
+| `models.dir` | `string` | `"models"` | Directory for semantic model YAML files |
+| `ai.provider` | `string` | `"anthropic"` | AI provider |
+| `ai.apiKey` | `string` | — | API key (optional; can also set `POLARIS_AI_API_KEY` env var) |
+| `ai.model` | `string` | `"claude-sonnet-4-20250514"` | Model to use for AI features |

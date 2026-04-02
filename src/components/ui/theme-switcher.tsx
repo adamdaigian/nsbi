@@ -10,7 +10,7 @@ const THEMES: { value: Theme; label: string }[] = [
 ];
 
 function getTheme(): Theme {
-  const stored = localStorage.getItem("nsbi-theme");
+  const stored = localStorage.getItem("polaris-theme");
   if (stored && ["daylight", "dusk", "midnight"].includes(stored)) {
     return stored as Theme;
   }
@@ -19,7 +19,7 @@ function getTheme(): Theme {
 
 function setTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("nsbi-theme", theme);
+  localStorage.setItem("polaris-theme", theme);
 }
 
 export function ThemeSwitcher({ className }: { className?: string }) {

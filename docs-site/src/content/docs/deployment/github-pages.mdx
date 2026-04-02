@@ -1,13 +1,13 @@
 ---
 title: GitHub Pages
-description: Deploy nsbi dashboards to GitHub Pages
+description: Deploy Polaris dashboards to GitHub Pages
 ---
 
 ## Setup
 
 ### 1. Configure Base Path
 
-If deploying to `https://username.github.io/repo-name/`, set the base path in `nsbi.config.ts`:
+If deploying to `https://username.github.io/repo-name/`, set the base path in `polaris.config.ts`:
 
 ```ts
 export default {
@@ -18,7 +18,7 @@ export default {
 ### 2. Build
 
 ```bash
-npx nsbi build --project .
+npx polaris build --project .
 ```
 
 ### 3. GitHub Actions Workflow
@@ -46,7 +46,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npx nsbi build --project .
+      - run: npx polaris build --project .
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
